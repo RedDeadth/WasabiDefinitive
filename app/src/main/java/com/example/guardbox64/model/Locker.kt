@@ -11,5 +11,5 @@ data class Locker(
     val location: String = "",
     val price: Double = 0.0,  // Cambia de String a Double si es un número
     val blocked: Boolean = false,  // Añadir este campo para que coincida con la base de datos
-    val sharedWith: String = "",
+    val sharedWithEmails: List<String> = emptyList(),
 )

@@ -83,6 +83,10 @@ fun LockerDetailsScreen(
     var isCountdownActive by remember { mutableStateOf(false) }
     var countdownTime by remember { mutableStateOf(5) }
     var countdownJob: Job? by remember { mutableStateOf(null) }
+    var showShareAccessDialog by remember { mutableStateOf(false) }
+    var sharedWithEmail by remember { mutableStateOf("") }
+    var sharedWithEmails by remember { mutableStateOf(locker?.sharedWithEmails?.toMutableList() ?: mutableListOf()) }
+
 
     val isLoading = locker == null
 
@@ -127,7 +131,10 @@ fun LockerDetailsScreen(
             Box(
                 modifier = Modifier
                     .size(220.dp)
-                    .background(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f), shape = CircleShape) // Fondo blanco
+                    .background(
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
+                        shape = CircleShape
+                    ) // Fondo blanco
                     .padding(24.dp) // Espaciado interno
             ) {
                 Image(
@@ -202,6 +209,26 @@ fun LockerDetailsScreen(
                     modifier = Modifier.padding(vertical = 8.dp) // Espaciado vertical
                 )
             }
+            if (locker.occupied && locker.userId == FirebaseAuth.getInstance().currentUser?.uid) {
+                Button(
+                    onClick = { showShareAccessDialog = true },
+                    modifier = Modifier
+                        .padding(16.dp) // Margen alrededor del botón
+                        .fillMaxWidth(), // Ocupa el ancho completo
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFFD6C215),  // Color de fondo del botón
+                        contentColor = Color.White           // Color del texto dentro del botón
+                    ),
+                    shape = RoundedCornerShape(8.dp),       // Bordes redondeados
+                    border = BorderStroke(2.dp, Color.Black) // Borde negro alrededor del botón
+                ) {
+                    Text(
+                        text = "Compartir Acceso",
+                        fontSize = 18.sp                    // Tamaño de fuente del texto
+                    )
+                }
+            }
+
 
             if (!locker.occupied) {
                 Button(
@@ -270,11 +297,22 @@ fun LockerDetailsScreen(
                                                 lockerId,
                                                 onSuccess = {
                                                     // Actualizar el estado del casillero a cerrado
-                                                    lockerViewModel.updateLockerOpenState(lockerId, isOpen = false) // Asegúrate de pasar 'isOpen' aquí
-                                                    Toast.makeText(context, "Reserva finalizada", Toast.LENGTH_SHORT).show()
+                                                    lockerViewModel.updateLockerOpenState(
+                                                        lockerId,
+                                                        isOpen = false
+                                                    ) // Asegúrate de pasar 'isOpen' aquí
+                                                    Toast.makeText(
+                                                        context,
+                                                        "Reserva finalizada",
+                                                        Toast.LENGTH_SHORT
+                                                    ).show()
                                                 },
                                                 onFailure = { error ->
-                                                    Toast.makeText(context, "Error: $error", Toast.LENGTH_SHORT).show()
+                                                    Toast.makeText(
+                                                        context,
+                                                        "Error: $error",
+                                                        Toast.LENGTH_SHORT
+                                                    ).show()
                                                 }
                                             )
                                             isCountdownActive = false
@@ -319,170 +357,242 @@ fun LockerDetailsScreen(
                     }
                 }
             }
-        }
-
-
-
-
-    }
-        // Diálogo para seleccionar tiempo de reserva
-        if (showTimeDialog) {
-            AlertDialog(
-                onDismissRequest = { showTimeDialog = false },
-                title = { Text("Selecciona el tiempo de reserva") },
-                text = {
-                    Column {
-                        // Botón para 1 hora
-                        Button(onClick = {
-                            val currentTime = System.currentTimeMillis()
-                            selectedTime = 1 * 3600000L  // 1 hora
-                            showTimeDialog = false  // Cerrar diálogo al seleccionar
-                            val reservationEndTime =
-                                currentTime + selectedTime!!  // Calcular el tiempo de fin de reserva
-
-                            lockerViewModel.reserveLocker(
-                                lockerId,
-                                FirebaseAuth.getInstance().currentUser?.uid ?: "",
-                                reservationEndTime,
-                                onSuccess = {
-                                    Toast.makeText(context, "Reserva exitosa", Toast.LENGTH_SHORT)
-                                        .show()
-                                },
-                                onFailure = { error ->
-                                    Toast.makeText(context, "Error: $error", Toast.LENGTH_SHORT)
-                                        .show()
-                                }
-                            )
-                        }) {
-                            Text("1 hora")
-                        }
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        // Botón para 2 horas
-                        Button(onClick = {
-                            val currentTime = System.currentTimeMillis()
-                            selectedTime = 2 * 3600000L  // 2 horas
-                            showTimeDialog = false
-                            val reservationEndTime = currentTime + selectedTime!!
-
-                            lockerViewModel.reserveLocker(
-                                lockerId,
-                                FirebaseAuth.getInstance().currentUser?.uid ?: "",
-                                reservationEndTime,
-                                onSuccess = {
-                                    Toast.makeText(context, "Reserva exitosa", Toast.LENGTH_SHORT)
-                                        .show()
-                                },
-                                onFailure = { error ->
-                                    Toast.makeText(context, "Error: $error", Toast.LENGTH_SHORT)
-                                        .show()
-                                }
-                            )
-                        }) {
-                            Text("2 horas")
-                        }
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        // Botón para 5 horas
-                        Button(onClick = {
-                            val currentTime = System.currentTimeMillis()
-                            selectedTime = 5 * 3600000L  // 5 horas
-                            showTimeDialog = false
-                            val reservationEndTime = currentTime + selectedTime!!
-
-                            lockerViewModel.reserveLocker(
-                                lockerId,
-                                FirebaseAuth.getInstance().currentUser?.uid ?: "",
-                                reservationEndTime,
-                                onSuccess = {
-                                    Toast.makeText(context, "Reserva exitosa", Toast.LENGTH_SHORT)
-                                        .show()
-                                },
-                                onFailure = { error ->
-                                    Toast.makeText(context, "Error: $error", Toast.LENGTH_SHORT)
-                                        .show()
-                                }
-                            )
-                        }) {
-                            Text("5 horas")
-                        }
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        // Botón para 12 horas
-                        Button(onClick = {
-                            val currentTime = System.currentTimeMillis()
-                            selectedTime = 12 * 3600000L  // 12 horas
-                            showTimeDialog = false
-                            val reservationEndTime = currentTime + selectedTime!!
-
-                            lockerViewModel.reserveLocker(
-                                lockerId,
-                                FirebaseAuth.getInstance().currentUser?.uid ?: "",
-                                reservationEndTime,
-                                onSuccess = {
-                                    Toast.makeText(context, "Reserva exitosa", Toast.LENGTH_SHORT)
-                                        .show()
-                                },
-                                onFailure = { error ->
-                                    Toast.makeText(context, "Error: $error", Toast.LENGTH_SHORT)
-                                        .show()
-                                }
-                            )
-                        }) {
-                            Text("12 horas")
-                        }
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        // Botón para tiempo personalizado
-                        Button(onClick = {
-                            showTimeDialog = false  // Cerrar el diálogo principal
-                            // Mostrar un cuadro de diálogo para ingresar tiempo personalizado
-                            showCustomTimeDialog = true
-                        }) {
-                            Text("Tiempo personalizado")
-                        }
-                    }
-                },
-                confirmButton = {
-                    Button(onClick = {
-                        showTimeDialog = false  // Cerrar diálogo al cancelar
-                    }) {
-                        Text("Cancelar")
-                    }
-                }
-            )
-        }
-
-        // Diálogo para tiempo personalizado (implementa la lógica según tus necesidades)
-        if (showCustomTimeDialog) {
-            CustomTimeDialog(
-                onTimeSelected = { customTimeInMillis -> // Recibe el tiempo total en milisegundos
-                    selectedTime = customTimeInMillis // Usa el tiempo total
-                    showCustomTimeDialog = false // Cerrar el cuadro de diálogo
-
-                    val currentTime = System.currentTimeMillis()
-                    val reservationEndTime = currentTime + selectedTime!!
-
-                    lockerViewModel.reserveLocker(
-                        lockerId,
-                        FirebaseAuth.getInstance().currentUser?.uid ?: "",
-                        reservationEndTime,
-                        onSuccess = {
-                            Toast.makeText(context, "Reserva exitosa", Toast.LENGTH_SHORT).show()
-                        },
-                        onFailure = { error ->
-                            Toast.makeText(context, "Error: $error", Toast.LENGTH_SHORT).show()
-                        }
+            // Mostrar lista de correos electrónicos de usuarios permitidos
+            if (sharedWithEmails.isNotEmpty()) {
+                Text(
+                    text = "Usuarios permitidos:",
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    ),
+                    modifier = Modifier.padding(vertical = 8.dp)
+                )
+                sharedWithEmails.forEach { email ->
+                    Text(
+                        text = email,
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontSize = 14.sp
+                        ),
+                        modifier = Modifier.padding(vertical = 4.dp)
                     )
-                },
-                onCancel = {
-                    showCustomTimeDialog = false // Cerrar el cuadro de diálogo
                 }
-            )
+            }
         }
 
 
     }
+    // Diálogo para seleccionar tiempo de reserva
+    if (showTimeDialog) {
+        AlertDialog(
+            onDismissRequest = { showTimeDialog = false },
+            title = { Text("Selecciona el tiempo de reserva") },
+            text = {
+                Column {
+                    // Botón para 1 hora
+                    Button(onClick = {
+                        val currentTime = System.currentTimeMillis()
+                        selectedTime = 1 * 3600000L  // 1 hora
+                        showTimeDialog = false  // Cerrar diálogo al seleccionar
+                        val reservationEndTime =
+                            currentTime + selectedTime!!  // Calcular el tiempo de fin de reserva
+
+                        lockerViewModel.reserveLocker(
+                            lockerId,
+                            FirebaseAuth.getInstance().currentUser?.uid ?: "",
+                            reservationEndTime,
+                            onSuccess = {
+                                Toast.makeText(context, "Reserva exitosa", Toast.LENGTH_SHORT)
+                                    .show()
+                            },
+                            onFailure = { error ->
+                                Toast.makeText(context, "Error: $error", Toast.LENGTH_SHORT)
+                                    .show()
+                            }
+                        )
+                    }) {
+                        Text("1 hora")
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // Botón para 2 horas
+                    Button(onClick = {
+                        val currentTime = System.currentTimeMillis()
+                        selectedTime = 2 * 3600000L  // 2 horas
+                        showTimeDialog = false
+                        val reservationEndTime = currentTime + selectedTime!!
+
+                        lockerViewModel.reserveLocker(
+                            lockerId,
+                            FirebaseAuth.getInstance().currentUser?.uid ?: "",
+                            reservationEndTime,
+                            onSuccess = {
+                                Toast.makeText(context, "Reserva exitosa", Toast.LENGTH_SHORT)
+                                    .show()
+                            },
+                            onFailure = { error ->
+                                Toast.makeText(context, "Error: $error", Toast.LENGTH_SHORT)
+                                    .show()
+                            }
+                        )
+                    }) {
+                        Text("2 horas")
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // Botón para 5 horas
+                    Button(onClick = {
+                        val currentTime = System.currentTimeMillis()
+                        selectedTime = 5 * 3600000L  // 5 horas
+                        showTimeDialog = false
+                        val reservationEndTime = currentTime + selectedTime!!
+
+                        lockerViewModel.reserveLocker(
+                            lockerId,
+                            FirebaseAuth.getInstance().currentUser?.uid ?: "",
+                            reservationEndTime,
+                            onSuccess = {
+                                Toast.makeText(context, "Reserva exitosa", Toast.LENGTH_SHORT)
+                                    .show()
+                            },
+                            onFailure = { error ->
+                                Toast.makeText(context, "Error: $error", Toast.LENGTH_SHORT)
+                                    .show()
+                            }
+                        )
+                    }) {
+                        Text("5 horas")
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // Botón para 12 horas
+                    Button(onClick = {
+                        val currentTime = System.currentTimeMillis()
+                        selectedTime = 12 * 3600000L  // 12 horas
+                        showTimeDialog = false
+                        val reservationEndTime = currentTime + selectedTime!!
+
+                        lockerViewModel.reserveLocker(
+                            lockerId,
+                            FirebaseAuth.getInstance().currentUser?.uid ?: "",
+                            reservationEndTime,
+                            onSuccess = {
+                                Toast.makeText(context, "Reserva exitosa", Toast.LENGTH_SHORT)
+                                    .show()
+                            },
+                            onFailure = { error ->
+                                Toast.makeText(context, "Error: $error", Toast.LENGTH_SHORT)
+                                    .show()
+                            }
+                        )
+                    }) {
+                        Text("12 horas")
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // Botón para tiempo personalizado
+                    Button(onClick = {
+                        showTimeDialog = false  // Cerrar el diálogo principal
+                        // Mostrar un cuadro de diálogo para ingresar tiempo personalizado
+                        showCustomTimeDialog = true
+                    }) {
+                        Text("Tiempo personalizado")
+                    }
+                }
+            },
+            confirmButton = {
+                Button(onClick = {
+                    showTimeDialog = false  // Cerrar diálogo al cancelar
+                }) {
+                    Text("Cancelar")
+                }
+            }
+        )
+    }
+
+    // Diálogo para tiempo personalizado (implementa la lógica según tus necesidades)
+    if (showCustomTimeDialog) {
+        CustomTimeDialog(
+            onTimeSelected = { customTimeInMillis -> // Recibe el tiempo total en milisegundos
+                selectedTime = customTimeInMillis // Usa el tiempo total
+                showCustomTimeDialog = false // Cerrar el cuadro de diálogo
+
+                val currentTime = System.currentTimeMillis()
+                val reservationEndTime = currentTime + selectedTime!!
+
+                lockerViewModel.reserveLocker(
+                    lockerId,
+                    FirebaseAuth.getInstance().currentUser?.uid ?: "",
+                    reservationEndTime,
+                    onSuccess = {
+                        Toast.makeText(context, "Reserva exitosa", Toast.LENGTH_SHORT).show()
+                    },
+                    onFailure = { error ->
+                        Toast.makeText(context, "Error: $error", Toast.LENGTH_SHORT).show()
+                    }
+                )
+            },
+            onCancel = {
+                showCustomTimeDialog = false // Cerrar el cuadro de diálogo
+            }
+        )
+    }
+    if (showShareAccessDialog) {
+        AlertDialog(
+            onDismissRequest = { showShareAccessDialog = false },
+            title = { Text("Compartir Acceso") },
+            text = {
+                Column {
+                    Text("Ingresa el correo electrónico del usuario con quien deseas compartir el acceso:")
+                    TextField(
+                        value = sharedWithEmail,
+                        onValueChange = { sharedWithEmail = it },
+                        keyboardOptions = KeyboardOptions.Default.copy(
+                            keyboardType = KeyboardType.Email
+                        ),
+                        label = { Text("Correo Electrónico") }
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        FirebaseAuth.getInstance().fetchSignInMethodsForEmail(sharedWithEmail)
+                            .addOnSuccessListener { signInMethods ->
+                                if (signInMethods.signInMethods?.isNotEmpty() == true) {
+                                    sharedWithEmails.add(sharedWithEmail)
+                                    lockerViewModel.shareLockerAccess(
+                                        lockerId,
+                                        sharedWithEmails,
+                                        onSuccess = {
+                                            Toast.makeText(context, "Acceso compartido exitosamente", Toast.LENGTH_SHORT).show()
+                                            showShareAccessDialog = false
+                                        },
+                                        onFailure = { error ->
+                                            Toast.makeText(context, "Error: $error", Toast.LENGTH_SHORT).show()
+                                        }
+                                    )
+                                } else {
+                                    Toast.makeText(context, "El correo electrónico ingresado no existe", Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                            .addOnFailureListener {
+                                Toast.makeText(context, "Error al verificar el correo electrónico", Toast.LENGTH_SHORT).show()
+                            }
+                    }
+                ) {
+                    Text("Compartir")
+                }
+            },
+            dismissButton = {
+                Button(onClick = { showShareAccessDialog = false }) {
+                    Text("Cancelar")
+                }
+            }
+        )
+    }
+}
+
+
 
 
 fun formatTime(timeInMillis: Long): String {

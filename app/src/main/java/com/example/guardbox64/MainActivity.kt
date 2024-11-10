@@ -20,6 +20,7 @@ import com.example.guardbox64.ui.viewmodel.AuthViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.guardbox64.navigator.NavGraph
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraph
@@ -36,6 +37,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var authViewModel: AuthViewModel
     private lateinit var googleSignInClient: GoogleSignInClient
     private lateinit var navController: NavHostController
+    private lateinit var lockerViewModel: LockerViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -43,6 +45,7 @@ class MainActivity : ComponentActivity() {
         // Inicializa Firebase
         FirebaseApp.initializeApp(this)
         authViewModel = ViewModelProvider(this).get(AuthViewModel::class.java)
+        lockerViewModel = ViewModelProvider(this).get(LockerViewModel::class.java)
 
         // Configuración de Google Sign-In
         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
@@ -62,6 +65,23 @@ class MainActivity : ComponentActivity() {
                 NavGraph(navController = navController, startDestination = startDestination)
             }
         }
+
+        // Observar el estado de autenticación
+        authViewModel.authState.observe(this, Observer { user ->
+            if (user != null) {
+                // El usuario ha iniciado sesión, navega a la pantalla de casilleros
+                navController.navigate("locker_list") {
+                    popUpTo("login") { inclusive = true }
+                }
+                // Cargar los casilleros después de iniciar sesión
+                lockerViewModel.loadLockers()
+            } else {
+                // El usuario ha cerrado sesión, navega a la pantalla de inicio de sesión
+                navController.navigate("login") {
+                    popUpTo("locker_list") { inclusive = true }
+                }
+            }
+        })
     }
 
     fun signInWithGoogle() {

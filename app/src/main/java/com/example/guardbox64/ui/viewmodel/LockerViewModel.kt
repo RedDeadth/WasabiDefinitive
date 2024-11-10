@@ -17,17 +17,32 @@ import androidx.lifecycle.MutableLiveData
 import com.google.firebase.database.*
 import android.os.Handler
 import androidx.compose.runtime.remember
+import com.google.firebase.auth.FirebaseAuth
 
 class LockerViewModel : ViewModel() {
     private val database: DatabaseReference = FirebaseDatabase.getInstance().getReference("lockers")
+    private val auth: FirebaseAuth = FirebaseAuth.getInstance()
 
     private val _lockers = MutableLiveData<List<Locker>>(emptyList())
     val lockers: LiveData<List<Locker>> = _lockers
 
     init {
-        loadLockers()
+        // Observar el estado de autenticación de Firebase
+        auth.addAuthStateListener { firebaseAuth ->
+            if (firebaseAuth.currentUser != null) {
+                loadLockers()
+            }
+        }
     }
 
+    init {
+        // Observar el estado de autenticación de Firebase
+        auth.addAuthStateListener { firebaseAuth ->
+            if (firebaseAuth.currentUser != null) {
+                loadLockers()
+            }
+        }
+    }
     fun reserveLocker(
         lockerId: String,
         userId: String,
@@ -58,55 +73,67 @@ class LockerViewModel : ViewModel() {
     }
 
 
-    private fun loadLockers() {
-        val lockersRef = FirebaseDatabase.getInstance().getReference("lockers")
-        lockersRef.addValueEventListener(object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                val lockerList = mutableListOf<Locker>()
-                val lockerIds = mutableSetOf<String>()
-                val currentTime = System.currentTimeMillis()
+    fun loadLockers() {
+        val user = auth.currentUser
+        if (user != null) {
+            database.addValueEventListener(object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    val lockerList = mutableListOf<Locker>()
+                    val lockerIds = mutableSetOf<String>()
+                    val currentTime = System.currentTimeMillis()
 
-                for (lockerSnapshot in snapshot.children) {
-                    try {
-                        val locker = lockerSnapshot.getValue(Locker::class.java)
-                            ?.copy(id = lockerSnapshot.key ?: "")
-                        if (locker != null && locker.id !in lockerIds) {
-                            // Verifica si la reserva ha expirado
-                            if (locker.reservationEndTime != null) {
-                                val reservationEndTimeString = locker.reservationEndTime.toString()
-                                val reservationEndTime = reservationEndTimeString.toLongOrNull()
-                                if (reservationEndTime != null && reservationEndTime <= currentTime) {
-                                    // Si la reserva ha expirado, actualiza el casillero a no ocupado
-                                    val lockerRef = database.child(locker.id)
-                                    val updates = mapOf(
-                                        "occupied" to false,
-                                        "userId" to "",
-                                        "reservationEndTime" to null
-                                    )
-                                    lockerRef.updateChildren(updates)
+                    for (lockerSnapshot in snapshot.children) {
+                        try {
+                            val locker = lockerSnapshot.getValue(Locker::class.java)
+                                ?.copy(id = lockerSnapshot.key ?: "")
+                            if (locker != null && locker.id !in lockerIds) {
+                                // Verifica si la reserva ha expirado
+                                if (locker.reservationEndTime != null) {
+                                    val reservationEndTimeString = locker.reservationEndTime.toString()
+                                    val reservationEndTime = reservationEndTimeString.toLongOrNull()
+                                    if (reservationEndTime != null && reservationEndTime <= currentTime) {
+                                        // Si la reserva ha expirado, actualiza el casillero a no ocupado
+                                        synchronized(this) {
+                                            val lockerRef = database.child(locker.id)
+                                            val updates = mapOf(
+                                                "occupied" to false,
+                                                "userId" to "",
+                                                "reservationEndTime" to null
+                                            )
+                                            lockerRef.updateChildren(updates)
+                                                .addOnSuccessListener {
+                                                    Log.d("Firebase", "Casillero ${locker.id} actualizado correctamente.")
+                                                }
+                                                .addOnFailureListener { e ->
+                                                    Log.e("Firebase", "Error al actualizar casillero ${locker.id}: ${e.message}")
+                                                }
+                                        }
+                                    }
                                 }
-                            }
 
-                            // Agregar el casillero a la lista
-                            lockerList.add(locker)
-                            lockerIds.add(locker.id)
+                                // Agregar el casillero a la lista
+                                lockerList.add(locker)
+                                lockerIds.add(locker.id)
+                            }
+                        } catch (e: Exception) {
+                            // Manejo de excepciones durante la deserialización
+                            Log.e("LockerViewModel", "Error deserializing Locker: $e")
                         }
-                    } catch (e: Exception) {
-                        // Manejo de excepciones durante la deserialización
-                        Log.e("LockerViewModel", "Error deserializing Locker: $e")
                     }
+
+                    // Actualizar el LiveData con los casilleros cargados (incluyendo los expirados)
+                    _lockers.value = lockerList
+                    Log.d("Firebase", "Casilleros cargados correctamente.")
                 }
 
-                // Actualizar el LiveData con los casilleros cargados (incluyendo los expirados)
-                _lockers.value = lockerList
-                Log.d("Firebase", "Casilleros cargados correctamente.")
-            }
-
-            override fun onCancelled(error: DatabaseError) {
-                Log.e("Firebase", "Error al cargar casilleros: ${error.message}")
-                _lockers.value = emptyList() // Retornar lista vacía en caso de error
-            }
-        })
+                override fun onCancelled(error: DatabaseError) {
+                    Log.e("Firebase", "Error al cargar casilleros: ${error.message}")
+                    _lockers.value = emptyList() // Retornar lista vacía en caso de error
+                }
+            })
+        } else {
+            Log.e("Firebase", "Usuario no autenticado")
+        }
     }
     fun updateLockerOpenState(lockerId: String, isOpen: Boolean) {
         val lockerRef = database.child(lockerId)
@@ -160,6 +187,20 @@ class LockerViewModel : ViewModel() {
         lockerRef.updateChildren(updates)
             .addOnSuccessListener { onSuccess() }
             .addOnFailureListener { e -> onFailure(e.message ?: "Error desconocido") }
+    }
+    fun shareLockerAccess(lockerId: String, sharedWithEmails: List<String>, onSuccess: () -> Unit, onFailure: (String) -> Unit) {
+        val lockerRef = database.child(lockerId)
+        val updates = mapOf<String, Any>(
+            "sharedWithEmails" to sharedWithEmails
+        )
+
+        lockerRef.updateChildren(updates)
+            .addOnSuccessListener {
+                onSuccess()
+            }
+            .addOnFailureListener { e ->
+                onFailure(e.message ?: "Error desconocido")
+            }
     }
 
 }
