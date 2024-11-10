@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "421730876260",
+    "firebase_url": "https://guardbox-42992-default-rtdb.firebaseio.com",
+    "project_id": "guardbox-42992",
+    "storage_bucket": "guardbox-42992.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:421730876260:android:b636b4c68d6d2c35489871",
+        "android_client_info": {
+          "package_name": "com.example.guardbox64"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "421730876260-pblr5im8v6p3el5l6ro4ihtb2e0und7g.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.guardbox64",
+            "certificate_hash": "29a684d10bbeb2dd051431cf414c8845bfc2add9"
+          }
+        },
+        {
+          "client_id": "421730876260-amv8hu6q9lh5ubm2s75eiqt6mvpo86ij.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC3ERiX-ARDhZq4m0NulXAjRExyHQqral4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "421730876260-amv8hu6q9lh5ubm2s75eiqt6mvpo86ij.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
