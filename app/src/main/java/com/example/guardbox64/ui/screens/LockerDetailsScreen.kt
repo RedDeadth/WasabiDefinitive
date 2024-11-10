@@ -64,7 +64,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Locale
-
+import androidx.compose.ui.text.input.ImeAction
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -537,59 +537,93 @@ fun LockerDetailsScreen(
         )
     }
     if (showShareAccessDialog) {
+        var isLoading by remember { mutableStateOf(false) }
+        var errorMessage by remember { mutableStateOf<String?>(null) }
+
         AlertDialog(
             onDismissRequest = { showShareAccessDialog = false },
             title = { Text("Compartir Acceso") },
             text = {
-                Column {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     Text("Ingresa el correo electrónico del usuario con quien deseas compartir el acceso:")
+
                     TextField(
                         value = sharedWithEmail,
-                        onValueChange = { sharedWithEmail = it },
-                        keyboardOptions = KeyboardOptions.Default.copy(
-                            keyboardType = KeyboardType.Email
+                        onValueChange = {
+                            sharedWithEmail = it
+                            errorMessage = null // Limpiar mensaje de error al escribir
+                        },
+                        isError = errorMessage != null,
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Email,
+                            imeAction = ImeAction.Done
                         ),
-                        label = { Text("Correo Electrónico") }
+                        label = { Text("Correo Electrónico") },
+                        modifier = Modifier.fillMaxWidth()
                     )
+
+                    // Mostrar mensaje de error si existe
+                    errorMessage?.let {
+                        Text(
+                            text = it,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.padding(start = 16.dp)
+                        )
+                    }
+
+                    // Indicador de carga
+                    if (isLoading) {
+                        LinearProgressIndicator(
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
                 }
             },
             confirmButton = {
                 Button(
                     onClick = {
-                        FirebaseAuth.getInstance().fetchSignInMethodsForEmail(sharedWithEmail)
-                            .addOnSuccessListener { signInMethods ->
-                                if (signInMethods.signInMethods?.isNotEmpty() == true) {
-                                    sharedWithEmails.add(sharedWithEmail)
-                                    lockerViewModel.shareLockerAccess(
-                                        lockerId,
-                                        sharedWithEmails,
-                                        onSuccess = {
-                                            Toast.makeText(context, "Acceso compartido exitosamente", Toast.LENGTH_SHORT).show()
-                                            showShareAccessDialog = false
-                                        },
-                                        onFailure = { error ->
-                                            Toast.makeText(context, "Error: $error", Toast.LENGTH_SHORT).show()
-                                        }
-                                    )
-                                } else {
-                                    Toast.makeText(context, "El correo electrónico ingresado no existe", Toast.LENGTH_SHORT).show()
-                                }
+                        isLoading = true
+                        errorMessage = null
+
+                        lockerViewModel.shareLockerAccess(
+                            lockerId = lockerId,
+                            newEmail = sharedWithEmail,
+                            onSuccess = {
+                                isLoading = false
+                                showShareAccessDialog = false
+                                sharedWithEmail = "" // Limpiar el campo
+                                Toast.makeText(context, "Acceso compartido exitosamente", Toast.LENGTH_SHORT).show()
+                            },
+                            onFailure = { error ->
+                                isLoading = false
+                                errorMessage = error
                             }
-                            .addOnFailureListener {
-                                Toast.makeText(context, "Error al verificar el correo electrónico", Toast.LENGTH_SHORT).show()
-                            }
-                    }
+                        )
+                    },
+                    enabled = !isLoading && sharedWithEmail.isNotEmpty()
                 ) {
                     Text("Compartir")
                 }
             },
             dismissButton = {
-                Button(onClick = { showShareAccessDialog = false }) {
+                Button(
+                    onClick = {
+                        showShareAccessDialog = false
+                        sharedWithEmail = "" // Limpiar el campo al cerrar
+                        errorMessage = null
+                    },
+                    enabled = !isLoading
+                ) {
                     Text("Cancelar")
                 }
             }
         )
     }
+
 }
 
 
