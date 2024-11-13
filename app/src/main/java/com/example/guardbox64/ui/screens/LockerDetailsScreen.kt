@@ -128,6 +128,9 @@ fun LockerDetailsScreen(
                 modifier = Modifier.padding(vertical = 8.dp) // Espaciado vertical
             )
         } else {
+
+
+
             Box(
                 modifier = Modifier
                     .size(220.dp)
@@ -182,33 +185,63 @@ fun LockerDetailsScreen(
 
 
             // Lógica del switch del casillero
-            if (locker.occupied && locker.userId == FirebaseAuth.getInstance().currentUser?.uid) {
-                var isOpen by remember { mutableStateOf(locker.open) }
+            // Lógica del switch del casillero
+            if (locker.occupied) {
+                if (locker.userId == FirebaseAuth.getInstance().currentUser?.uid) {
+                    var isOpen by remember { mutableStateOf(locker.open) }
 
-                // Switch para abrir/cerrar el casillero
-                Switch(
-                    checked = isOpen,
-                    onCheckedChange = { checked ->
-                        isOpen = checked
-                        lockerViewModel.updateLockerOpenState(lockerId, checked)
-                    }
-                )
+                    // Switch para abrir/cerrar el casillero
+                    Switch(
+                        checked = isOpen,
+                        onCheckedChange = { checked ->
+                            isOpen = checked
+                            lockerViewModel.updateLockerOpenState(lockerId, checked)
+                        }
+                    )
+                    Text(
+                        text = if (isOpen) "Casillero Abierto" else "Casillero Cerrado",
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontSize = 16.sp
+                        ),
+                        modifier = Modifier.padding(vertical = 8.dp) // Espaciado vertical
+                    )
+                } else if (locker.sharedWithEmails.contains(FirebaseAuth.getInstance().currentUser?.email)) {
+                    var isOpen by remember { mutableStateOf(locker.open) }
+
+                    // Switch para abrir/cerrar el casillero
+                    Switch(
+                        checked = isOpen,
+                        onCheckedChange = { checked ->
+                            isOpen = checked
+                            lockerViewModel.updateLockerOpenState(lockerId, checked)
+                        }
+                    )
+                    Text(
+                        text = if (isOpen) "Casillero Abierto" else "Casillero Cerrado",
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontSize = 16.sp
+                        ),
+                        modifier = Modifier.padding(vertical = 8.dp) // Espaciado vertical
+                    )
+                } else {
+                    Text(
+                        text = "No tienes permisos para gestionar la apertura de este casillero.",
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontSize = 16.sp
+                        ),
+                        modifier = Modifier.padding(vertical = 8.dp) // Espaciado vertical
+                    )
+                }
+            } else {
                 Text(
-                    text = if (isOpen) "Casillero Abierto" else "Casillero Cerrado",
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        fontSize = 16.sp
-                    ),
-                    modifier = Modifier.padding(vertical = 8.dp) // Espaciado vertical
-                )
-            } else if (locker.occupied) {
-                Text(
-                    text = "No puedes gestionar la apertura de este casillero.",
+                    text = "Este casillero está libre.",
                     style = MaterialTheme.typography.bodyMedium.copy(
                         fontSize = 16.sp
                     ),
                     modifier = Modifier.padding(vertical = 8.dp) // Espaciado vertical
                 )
             }
+
             if (locker.occupied && locker.userId == FirebaseAuth.getInstance().currentUser?.uid) {
                 Button(
                     onClick = { showShareAccessDialog = true },

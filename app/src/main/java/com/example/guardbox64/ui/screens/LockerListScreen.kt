@@ -30,15 +30,19 @@ import androidx.compose.ui.draw.clip
 fun LockerListScreen(
     lockerViewModel: LockerViewModel,
     navController: NavHostController,
-    onAddLockerClick: () -> Unit,
+
 ) {
-    var showDialog by remember { mutableStateOf(false) }
+
     val lockers by lockerViewModel.lockers.observeAsState(emptyList())
     val uniqueLockers = lockers.distinctBy { it.id }
 
     val reservedLockers = uniqueLockers.filter { it.occupied && it.userId == FirebaseAuth.getInstance().currentUser?.uid }
     val freeLockers = uniqueLockers.filter { !it.occupied }
     val occupiedLockers = uniqueLockers.filter { it.occupied && it.userId != FirebaseAuth.getInstance().currentUser?.uid }
+
+    val sharedLockers = uniqueLockers.filter { locker ->
+        locker.sharedWithEmails.contains(FirebaseAuth.getInstance().currentUser?.email)
+    }
 
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) { // Padding general
         // Sección de casilleros reservados
@@ -59,6 +63,25 @@ fun LockerListScreen(
                 }
             }
         }
+        // Sección de casilleros compartidos
+        if (sharedLockers.isNotEmpty()) {
+            Text(
+                text = "Casilleros Compartidos",
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.primary
+            )
+            LazyRow(
+                contentPadding = PaddingValues(vertical = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(sharedLockers) { locker ->
+                    LockerItem(locker = locker) {
+                        navController.navigate("locker_details/${locker.id}")
+                    }
+                }
+            }
+        }
+
 
         // Sección de casilleros libres
         if (freeLockers.isNotEmpty()) {
