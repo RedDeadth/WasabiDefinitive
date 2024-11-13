@@ -1,4 +1,4 @@
-package com.example.guardbox64.ui.screens
+ package com.example.guardbox64.ui.screens
 
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.foundation.BorderStroke
@@ -83,6 +83,8 @@ fun LockerDetailsScreen(
     var isCountdownActive by remember { mutableStateOf(false) }
     var countdownTime by remember { mutableStateOf(5) }
     var countdownJob: Job? by remember { mutableStateOf(null) }
+    var showPaymentDialog by remember { mutableStateOf(false) }
+    var calculatedCost by remember { mutableStateOf(0) }
 
     val isLoading = locker == null
 
@@ -325,133 +327,93 @@ fun LockerDetailsScreen(
 
 
     }
-        // Diálogo para seleccionar tiempo de reserva
-        if (showTimeDialog) {
-            AlertDialog(
-                onDismissRequest = { showTimeDialog = false },
-                title = { Text("Selecciona el tiempo de reserva") },
-                text = {
-                    Column {
-                        // Botón para 1 hora
+// Diálogo para seleccionar tiempo de reserva
+    if (showTimeDialog) {
+        AlertDialog(
+            onDismissRequest = { showTimeDialog = false },
+            title = { Text("Selecciona el tiempo de reserva") },
+            text = {
+                Column {
+                    // Botones para horas predefinidas
+                    val times = listOf(1, 2, 5, 12)
+                    times.forEach { hours ->
                         Button(onClick = {
-                            val currentTime = System.currentTimeMillis()
-                            selectedTime = 1 * 3600000L  // 1 hora
-                            showTimeDialog = false  // Cerrar diálogo al seleccionar
-                            val reservationEndTime =
-                                currentTime + selectedTime!!  // Calcular el tiempo de fin de reserva
-
-                            lockerViewModel.reserveLocker(
-                                lockerId,
-                                FirebaseAuth.getInstance().currentUser?.uid ?: "",
-                                reservationEndTime,
-                                onSuccess = {
-                                    Toast.makeText(context, "Reserva exitosa", Toast.LENGTH_SHORT)
-                                        .show()
-                                },
-                                onFailure = { error ->
-                                    Toast.makeText(context, "Error: $error", Toast.LENGTH_SHORT)
-                                        .show()
-                                }
-                            )
-                        }) {
-                            Text("1 hora")
-                        }
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        // Botón para 2 horas
-                        Button(onClick = {
-                            val currentTime = System.currentTimeMillis()
-                            selectedTime = 2 * 3600000L  // 2 horas
+                            selectedTime = hours * 3600000L  // Tiempo en milisegundos
+                            calculatedCost = hours // Costo total
                             showTimeDialog = false
-                            val reservationEndTime = currentTime + selectedTime!!
-
-                            lockerViewModel.reserveLocker(
-                                lockerId,
-                                FirebaseAuth.getInstance().currentUser?.uid ?: "",
-                                reservationEndTime,
-                                onSuccess = {
-                                    Toast.makeText(context, "Reserva exitosa", Toast.LENGTH_SHORT)
-                                        .show()
-                                },
-                                onFailure = { error ->
-                                    Toast.makeText(context, "Error: $error", Toast.LENGTH_SHORT)
-                                        .show()
-                                }
-                            )
+                            showPaymentDialog = true // Mostrar diálogo de pago
                         }) {
-                            Text("2 horas")
+                            Text("$hours hora${if (hours > 1) "s" else ""} - S/ $hours")
                         }
                         Spacer(modifier = Modifier.height(8.dp))
-
-                        // Botón para 5 horas
-                        Button(onClick = {
-                            val currentTime = System.currentTimeMillis()
-                            selectedTime = 5 * 3600000L  // 5 horas
-                            showTimeDialog = false
-                            val reservationEndTime = currentTime + selectedTime!!
-
-                            lockerViewModel.reserveLocker(
-                                lockerId,
-                                FirebaseAuth.getInstance().currentUser?.uid ?: "",
-                                reservationEndTime,
-                                onSuccess = {
-                                    Toast.makeText(context, "Reserva exitosa", Toast.LENGTH_SHORT)
-                                        .show()
-                                },
-                                onFailure = { error ->
-                                    Toast.makeText(context, "Error: $error", Toast.LENGTH_SHORT)
-                                        .show()
-                                }
-                            )
-                        }) {
-                            Text("5 horas")
-                        }
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        // Botón para 12 horas
-                        Button(onClick = {
-                            val currentTime = System.currentTimeMillis()
-                            selectedTime = 12 * 3600000L  // 12 horas
-                            showTimeDialog = false
-                            val reservationEndTime = currentTime + selectedTime!!
-
-                            lockerViewModel.reserveLocker(
-                                lockerId,
-                                FirebaseAuth.getInstance().currentUser?.uid ?: "",
-                                reservationEndTime,
-                                onSuccess = {
-                                    Toast.makeText(context, "Reserva exitosa", Toast.LENGTH_SHORT)
-                                        .show()
-                                },
-                                onFailure = { error ->
-                                    Toast.makeText(context, "Error: $error", Toast.LENGTH_SHORT)
-                                        .show()
-                                }
-                            )
-                        }) {
-                            Text("12 horas")
-                        }
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        // Botón para tiempo personalizado
-                        Button(onClick = {
-                            showTimeDialog = false  // Cerrar el diálogo principal
-                            // Mostrar un cuadro de diálogo para ingresar tiempo personalizado
-                            showCustomTimeDialog = true
-                        }) {
-                            Text("Tiempo personalizado")
-                        }
                     }
-                },
-                confirmButton = {
+
+                    // Botón para tiempo personalizado
                     Button(onClick = {
-                        showTimeDialog = false  // Cerrar diálogo al cancelar
+                        showTimeDialog = false
+                        showCustomTimeDialog = true
                     }) {
-                        Text("Cancelar")
+                        Text("Tiempo personalizado")
                     }
                 }
-            )
-        }
+            },
+            confirmButton = {
+                Button(onClick = { showTimeDialog = false }) {
+                    Text("Cancelar")
+                }
+            }
+        )
+    }
+
+// Diálogo para tiempo personalizado
+    if (showCustomTimeDialog) {
+        CustomTimeDialog(
+            onTimeSelected = { customTimeInMillis ->
+                selectedTime = customTimeInMillis
+                calculatedCost = (customTimeInMillis / 3600000).toInt() // Calcula el costo en base a horas
+                showCustomTimeDialog = false
+                showPaymentDialog = true // Mostrar diálogo de pago
+            },
+            onCancel = { showCustomTimeDialog = false }
+        )
+    }
+
+// Diálogo de confirmación de pago
+    if (showPaymentDialog) {
+        AlertDialog(
+            onDismissRequest = { showPaymentDialog = false },
+            title = { Text("Confirmar Pago") },
+            text = {
+                Text("Costo total: S/ $calculatedCost\n¿Deseas confirmar tu reserva?")
+            },
+            confirmButton = {
+                Button(onClick = {
+                    showPaymentDialog = false
+                    val currentTime = System.currentTimeMillis()
+                    val reservationEndTime = currentTime + (selectedTime ?: 0L)
+
+                    lockerViewModel.reserveLocker(
+                        lockerId,
+                        FirebaseAuth.getInstance().currentUser?.uid ?: "",
+                        reservationEndTime,
+                        onSuccess = {
+                            Toast.makeText(context, "Reserva exitosa", Toast.LENGTH_SHORT).show()
+                        },
+                        onFailure = { error ->
+                            Toast.makeText(context, "Error: $error", Toast.LENGTH_SHORT).show()
+                        }
+                    )
+                }) {
+                    Text("Confirmar")
+                }
+            },
+            dismissButton = {
+                Button(onClick = { showPaymentDialog = false }) {
+                    Text("Cancelar")
+                }
+            }
+        )
+    }
 
         // Diálogo para tiempo personalizado (implementa la lógica según tus necesidades)
         if (showCustomTimeDialog) {
