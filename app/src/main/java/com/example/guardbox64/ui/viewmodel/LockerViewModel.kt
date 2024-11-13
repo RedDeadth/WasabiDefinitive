@@ -34,15 +34,6 @@ class LockerViewModel : ViewModel() {
             }
         }
     }
-
-    init {
-        // Observar el estado de autenticación de Firebase
-        auth.addAuthStateListener { firebaseAuth ->
-            if (firebaseAuth.currentUser != null) {
-                loadLockers()
-            }
-        }
-    }
     fun reserveLocker(
         lockerId: String,
         userId: String,
@@ -98,7 +89,8 @@ class LockerViewModel : ViewModel() {
                                             val updates = mapOf(
                                                 "occupied" to false,
                                                 "userId" to "",
-                                                "reservationEndTime" to null
+                                                "reservationEndTime" to null,
+
                                             )
                                             lockerRef.updateChildren(updates)
                                                 .addOnSuccessListener {
@@ -199,167 +191,46 @@ class LockerViewModel : ViewModel() {
             return
         }
 
-        Log.d("LockerViewModel", "Iniciando verificación en Auth para: $newEmail")
-
-        // Primero intentamos buscar el usuario por email en Auth
+        // Verificación directa de que el correo existe en Auth
         auth.fetchSignInMethodsForEmail(newEmail)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
                     val signInMethods = task.result?.signInMethods
-                    Log.d("LockerViewModel", "Métodos de inicio de sesión encontrados: $signInMethods")
 
-                    // Verificar si el usuario actual tiene permisos para compartir
-                    val currentUser = auth.currentUser
-                    if (currentUser == null) {
-                        onFailure("Debes iniciar sesión para compartir acceso")
-                        return@addOnCompleteListener
-                    }
+                    // Acceso directo al casillero sin duplicar el nodo `lockers`
+                    val updatedEmailsRef = database.child(lockerId).child("sharedWithEmails")
+                    updatedEmailsRef.runTransaction(object : Transaction.Handler {
+                        override fun doTransaction(mutableData: MutableData): Transaction.Result {
+                            val currentEmails = mutableData.getValue<List<String>>() ?: emptyList()
+                            if (currentEmails.contains(newEmail)) {
+                                onFailure("Este correo ya tiene acceso al casillero")
+                                return Transaction.abort()
+                            }
 
-                    // Procedemos a actualizar el locker incluso si no encontramos métodos de inicio de sesión
-                    // Esto permite compartir con usuarios que podrían registrarse más tarde
-                    database.child("lockers")
-                        .child(lockerId)
-                        .get()
-                        .addOnSuccessListener { snapshot ->
-                            try {
-                                val currentLocker = snapshot.getValue(Locker::class.java)
-                                Log.d("LockerViewModel", "Locker actual: $currentLocker")
+                            // Añadir nuevo correo y actualizar en Firebase
+                            val updatedEmails = currentEmails.toMutableList().apply { add(newEmail) }
+                            mutableData.value = updatedEmails
+                            return Transaction.success(mutableData)
+                        }
 
-                                if (currentLocker == null) {
-                                    onFailure("No se pudo encontrar el casillero")
-                                    return@addOnSuccessListener
-                                }
-
-                                // Verificar si el usuario actual es el dueño del locker
-                                if (currentLocker.userId != currentUser.uid) {
-                                    onFailure("No tienes permisos para compartir este casillero")
-                                    return@addOnSuccessListener
-                                }
-
-                                // Verificar si el correo ya existe
-                                val updatedEmails = currentLocker.sharedWithEmails.toMutableList()
-                                if (updatedEmails.contains(newEmail)) {
-                                    onFailure("Este correo ya tiene acceso al casillero")
-                                    return@addOnSuccessListener
-                                }
-
-                                // Añadir nuevo correo
-                                updatedEmails.add(newEmail)
-
-                                // Actualizar en Firebase
-                                database.child("lockers")
-                                    .child(lockerId)
-                                    .child("sharedWithEmails")
-                                    .setValue(updatedEmails)
-                                    .addOnSuccessListener {
-                                        Log.d("LockerViewModel", "Acceso compartido exitosamente con: $newEmail")
-                                        onSuccess()
-                                    }
-                                    .addOnFailureListener { e ->
-                                        Log.e("LockerViewModel", "Error actualizando sharedWithEmails", e)
-                                        onFailure("Error al actualizar la lista de accesos: ${e.message}")
-                                    }
-
-                            } catch (e: Exception) {
-                                Log.e("LockerViewModel", "Error procesando datos del casillero", e)
-                                onFailure("Error procesando datos del casillero: ${e.message}")
+                        override fun onComplete(
+                            error: DatabaseError?,
+                            committed: Boolean,
+                            snapshot: DataSnapshot?
+                        ) {
+                            if (committed) {
+                                onSuccess()
+                            } else {
+                                onFailure(error?.message ?: "Error desconocido al compartir el acceso")
                             }
                         }
-                        .addOnFailureListener { e ->
-                            Log.e("LockerViewModel", "Error obteniendo datos del casillero", e)
-                            onFailure("Error al obtener información del casillero: ${e.message}")
-                        }
+                    })
                 } else {
-                    Log.e("LockerViewModel", "Error verificando en Auth", task.exception)
                     onFailure("Error al verificar el correo electrónico: ${task.exception?.message}")
                 }
             }
     }
-    private fun updateLockerSharedAccess(
-        lockerId: String,
-        newEmail: String,
-        onSuccess: () -> Unit,
-        onFailure: (String) -> Unit
-    ) {
-        Log.d("LockerViewModel", "Iniciando updateLockerSharedAccess para email: $newEmail")
 
-        database.child(lockerId).get()
-            .addOnSuccessListener { snapshot ->
-                try {
-                    val currentLocker = snapshot.getValue(Locker::class.java)
-                    Log.d("LockerViewModel", "Locker actual: $currentLocker")
-                    Log.d("LockerViewModel", "Emails compartidos actuales: ${currentLocker?.sharedWithEmails}")
-
-                    if (currentLocker == null) {
-                        onFailure("No se pudo encontrar el casillero")
-                        return@addOnSuccessListener
-                    }
-
-                    // Crear nueva lista de correos
-                    val updatedEmails = currentLocker.sharedWithEmails.toMutableList()
-
-                    // Verificar si el correo ya existe
-                    if (updatedEmails.contains(newEmail)) {
-                        Log.d("LockerViewModel", "Email ya existe en la lista: $newEmail")
-                        onFailure("Este correo ya tiene acceso al casillero")
-                        return@addOnSuccessListener
-                    }
-
-                    // Añadir nuevo correo
-                    updatedEmails.add(newEmail)
-                    Log.d("LockerViewModel", "Nueva lista de emails: $updatedEmails")
-
-                    // Actualizar en Firebase
-                    database.child(lockerId)
-                        .child("sharedWithEmails")
-                        .setValue(updatedEmails)
-                        .addOnSuccessListener {
-                            Log.d("LockerViewModel", "Acceso compartido exitosamente con: $newEmail")
-                            onSuccess()
-                        }
-                        .addOnFailureListener { e ->
-                            Log.e("LockerViewModel", "Error actualizando sharedWithEmails", e)
-                            onFailure("Error al actualizar la lista de accesos: ${e.message}")
-                        }
-
-                } catch (e: Exception) {
-                    Log.e("LockerViewModel", "Error procesando datos del casillero", e)
-                    onFailure("Error procesando datos del casillero: ${e.message}")
-                }
-            }
-            .addOnFailureListener { e ->
-                Log.e("LockerViewModel", "Error obteniendo datos del casillero", e)
-                onFailure("Error al obtener información del casillero: ${e.message}")
-            }
-    }
-
-    fun removeSharedAccess(
-        lockerId: String,
-        emailToRemove: String,
-        onSuccess: () -> Unit,
-        onFailure: (String) -> Unit
-    ) {
-        database.child(lockerId).get().addOnSuccessListener { snapshot ->
-            val currentLocker = snapshot.getValue(Locker::class.java)
-            val updatedEmails = (currentLocker?.sharedWithEmails ?: emptyList()).toMutableList()
-
-            if (updatedEmails.remove(emailToRemove)) {
-                database.child(lockerId)
-                    .child("sharedWithEmails")
-                    .setValue(updatedEmails)
-                    .addOnSuccessListener {
-                        onSuccess()
-                    }
-                    .addOnFailureListener { e ->
-                        onFailure(e.message ?: "Error desconocido al remover el acceso")
-                    }
-            } else {
-                onFailure("El correo no se encontraba en la lista de accesos compartidos")
-            }
-        }.addOnFailureListener { e ->
-            onFailure(e.message ?: "Error al obtener información del casillero")
-        }
-    }
 
 }
 
