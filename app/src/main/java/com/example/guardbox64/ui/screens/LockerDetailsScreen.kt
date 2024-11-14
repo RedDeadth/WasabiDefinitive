@@ -76,6 +76,7 @@ fun LockerDetailsScreen(
     val context = LocalContext.current
     val lockerList by lockerViewModel.lockers.observeAsState(emptyList())
     val locker = lockerList.find { it.id == lockerId }
+
     var showTimeDialog by remember { mutableStateOf(false) }
     var selectedTime by remember { mutableStateOf<Long?>(null) }
     var showCustomTimeDialog by remember { mutableStateOf(false) }
@@ -83,7 +84,9 @@ fun LockerDetailsScreen(
     var isCountdownActive by remember { mutableStateOf(false) }
     var countdownTime by remember { mutableStateOf(5) }
     var countdownJob: Job? by remember { mutableStateOf(null) }
+
     var showShareAccessDialog by remember { mutableStateOf(false) }
+    val currentUserEmail = FirebaseAuth.getInstance().currentUser?.email
     var sharedWithEmail by remember { mutableStateOf("") }
     var sharedWithEmails by remember { mutableStateOf(locker?.sharedWithEmails?.toMutableList() ?: mutableListOf()) }
 
@@ -141,7 +144,7 @@ fun LockerDetailsScreen(
                     .padding(24.dp) // Espaciado interno
             ) {
                 Image(
-                    painter = painterResource(id = R.drawable.logo),
+                    painter = painterResource(id = R.drawable.lockertwo),
                     contentDescription = "Imagen del Casillero",
                     modifier = Modifier
                         .size(200.dp) // Cambia el tamaño según lo que necesites
@@ -183,8 +186,6 @@ fun LockerDetailsScreen(
                 )
             }
 
-
-            // Lógica del switch del casillero
             // Lógica del switch del casillero
             if (locker.occupied) {
                 if (locker.userId == FirebaseAuth.getInstance().currentUser?.uid) {
@@ -205,6 +206,28 @@ fun LockerDetailsScreen(
                         ),
                         modifier = Modifier.padding(vertical = 8.dp) // Espaciado vertical
                     )
+                    // Mostrar los correos de usuarios permitidos solo si el usuario es el propietario
+                    Text(
+                        text = "Usuarios Permitidos:",
+                        style = MaterialTheme.typography.bodyLarge.copy(
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 18.sp,
+                            color = MaterialTheme.colorScheme.onBackground
+                        ),
+                        modifier = Modifier.padding(vertical = 8.dp)
+                    )
+
+                    // Mostrar la lista de correos de usuarios permitidos
+                    sharedWithEmails.forEach { email ->
+                        Text(
+                            text = email,
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                fontSize = 16.sp,
+                                color = MaterialTheme.colorScheme.onBackground
+                            ),
+                            modifier = Modifier.padding(vertical = 4.dp)
+                        )
+                    }
                 } else if (locker.sharedWithEmails.contains(FirebaseAuth.getInstance().currentUser?.email)) {
                     var isOpen by remember { mutableStateOf(locker.open) }
 
@@ -256,11 +279,12 @@ fun LockerDetailsScreen(
                     border = BorderStroke(2.dp, Color.Black) // Borde negro alrededor del botón
                 ) {
                     Text(
-                        text = "Compartir Acceso",
+                        text = "+ Añadir mas Usuarios",
                         fontSize = 18.sp                    // Tamaño de fuente del texto
                     )
                 }
             }
+
 
 
             if (!locker.occupied) {
@@ -388,26 +412,6 @@ fun LockerDetailsScreen(
                             Text("Cancelar Finalización")
                         }
                     }
-                }
-            }
-            // Mostrar lista de correos electrónicos de usuarios permitidos
-            if (sharedWithEmails.isNotEmpty()) {
-                Text(
-                    text = "Usuarios permitidos:",
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold
-                    ),
-                    modifier = Modifier.padding(vertical = 8.dp)
-                )
-                sharedWithEmails.forEach { email ->
-                    Text(
-                        text = email,
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            fontSize = 14.sp
-                        ),
-                        modifier = Modifier.padding(vertical = 4.dp)
-                    )
                 }
             }
         }
@@ -619,23 +623,31 @@ fun LockerDetailsScreen(
             confirmButton = {
                 Button(
                     onClick = {
-                        isLoading = true
-                        errorMessage = null
+                        if (sharedWithEmail == currentUserEmail) {
+                            errorMessage = "No puedes añadir tu propio correo."
+                        } else {
+                            isLoading = true
+                            errorMessage = null
 
-                        lockerViewModel.shareLockerAccess(
-                            lockerId = lockerId,
-                            newEmail = sharedWithEmail,
-                            onSuccess = {
-                                isLoading = false
-                                showShareAccessDialog = false
-                                sharedWithEmail = "" // Limpiar el campo
-                                Toast.makeText(context, "Acceso compartido exitosamente", Toast.LENGTH_SHORT).show()
-                            },
-                            onFailure = { error ->
-                                isLoading = false
-                                errorMessage = error
-                            }
-                        )
+                            lockerViewModel.shareLockerAccess(
+                                lockerId = lockerId,
+                                newEmail = sharedWithEmail,
+                                onSuccess = {
+                                    isLoading = false
+                                    showShareAccessDialog = false
+                                    sharedWithEmails = sharedWithEmails.toMutableList().apply {
+                                        add(sharedWithEmail)
+                                    }
+
+                                    sharedWithEmail = "" // Limpiar el campo
+                                    Toast.makeText(context, "Acceso compartido exitosamente", Toast.LENGTH_SHORT).show()
+                                },
+                                onFailure = { error ->
+                                    isLoading = false
+                                    errorMessage = error
+                                }
+                            )
+                        }
                     },
                     enabled = !isLoading && sharedWithEmail.isNotEmpty()
                 ) {
@@ -658,10 +670,6 @@ fun LockerDetailsScreen(
     }
 
 }
-
-
-
-
 fun formatTime(timeInMillis: Long): String {
     val dateFormat = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
     return dateFormat.format(timeInMillis)

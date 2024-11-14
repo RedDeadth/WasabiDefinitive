@@ -63,25 +63,6 @@ fun LockerListScreen(
                 }
             }
         }
-        // Sección de casilleros compartidos
-        if (sharedLockers.isNotEmpty()) {
-            Text(
-                text = "Casilleros Compartidos",
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.primary
-            )
-            LazyRow(
-                contentPadding = PaddingValues(vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(sharedLockers) { locker ->
-                    LockerItem(locker = locker) {
-                        navController.navigate("locker_details/${locker.id}")
-                    }
-                }
-            }
-        }
-
 
         // Sección de casilleros libres
         if (freeLockers.isNotEmpty()) {
@@ -151,7 +132,7 @@ fun LockerItem(locker: Locker, onClick: () -> Unit) {
                 .padding(8.dp) // Espaciado interno
         ) {
             Image(
-                painter = painterResource(id = R.drawable.logo),
+                painter = painterResource(id = R.drawable.lockertwo),
                 contentDescription = "Imagen del Casillero",
                 modifier = Modifier.fillMaxSize().clip(CircleShape) // Recorte en círculo
             )
