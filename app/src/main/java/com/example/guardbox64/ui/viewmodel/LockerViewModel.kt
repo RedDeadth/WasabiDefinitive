@@ -90,8 +90,8 @@ class LockerViewModel : ViewModel() {
                                                 "occupied" to false,
                                                 "userId" to "",
                                                 "reservationEndTime" to null,
-
-                                            )
+                                                "sharedWithEmails" to emptyList<String>(),
+                                                )
                                             lockerRef.updateChildren(updates)
                                                 .addOnSuccessListener {
                                                     Log.d("Firebase", "Casillero ${locker.id} actualizado correctamente.")
@@ -155,9 +155,8 @@ class LockerViewModel : ViewModel() {
         val updates = mapOf<String, Any>(
             "occupied" to false,
             "userId" to "",
-
-
-        )
+            "sharedWithEmails" to emptyList<String>(),
+            )
 
         lockerRef.updateChildren(updates)
             .addOnSuccessListener {
@@ -172,8 +171,10 @@ class LockerViewModel : ViewModel() {
         val updates = mapOf<String, Any>(
             "occupied" to false,
             "userId" to "",
+            "sharedWithEmails" to emptyList<String>(),
 
-        )
+
+            )
 
 
         lockerRef.updateChildren(updates)
@@ -230,8 +231,52 @@ class LockerViewModel : ViewModel() {
                 }
             }
     }
+    fun removeSharedAccess(
+        lockerId: String,
+        emailToRemove: String,
+        onSuccess: () -> Unit,
+        onFailure: (String) -> Unit
+    ) {
+        val updatedEmailsRef = database.child(lockerId).child("sharedWithEmails")
+        updatedEmailsRef.runTransaction(object : Transaction.Handler {
+            override fun doTransaction(mutableData: MutableData): Transaction.Result {
+                val currentEmails = mutableData.getValue<List<String>>() ?: emptyList()
+                if (!currentEmails.contains(emailToRemove)) {
+                    onFailure("Este correo no tiene acceso al casillero")
+                    return Transaction.abort()
+                }
 
+                val updatedEmails = currentEmails.toMutableList().apply { remove(emailToRemove) }
+                mutableData.value = updatedEmails
+                return Transaction.success(mutableData)
+            }
 
+            override fun onComplete(
+                error: DatabaseError?,
+                committed: Boolean,
+                snapshot: DataSnapshot?
+            ) {
+                if (committed) {
+                    onSuccess()
+                } else {
+                    onFailure(error?.message ?: "Error desconocido al eliminar el acceso")
+                }
+            }
+        })
+    }
+    fun observeLockerOpenState(lockerId: String, onStateChanged: (Boolean) -> Unit) {
+        val lockerRef = database.child(lockerId).child("open")
+        lockerRef.addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val isOpen = snapshot.getValue(Boolean::class.java) ?: false
+                onStateChanged(isOpen)
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                Log.e("Firebase", "Error al observar el estado del casillero: ${error.message}")
+            }
+        })
+    }
 }
 
 

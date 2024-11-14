@@ -17,14 +17,18 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
@@ -54,6 +58,8 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.TextField
 import androidx.compose.ui.draw.clip
@@ -90,334 +96,358 @@ fun LockerDetailsScreen(
     var sharedWithEmail by remember { mutableStateOf("") }
     var sharedWithEmails by remember { mutableStateOf(locker?.sharedWithEmails?.toMutableList() ?: mutableListOf()) }
 
-
     val isLoading = locker == null
 
-    Column(
+    LazyColumn(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Título principal
-        Text(
-            text = "Detalles del Casillero",
-            style = MaterialTheme.typography.titleLarge.copy(
-                fontWeight = FontWeight.Bold,
-                fontSize = 24.sp,
-                color = MaterialTheme.colorScheme.primary
-            ),
-            modifier = Modifier.padding(bottom = 16.dp) // Espaciado inferior
-        )
-
-        if (isLoading) {
+        item {
+            // Título principal
             Text(
-                text = "Cargando...",
-                style = MaterialTheme.typography.bodyLarge.copy(
-                    color = MaterialTheme.colorScheme.secondary,
-                    fontSize = 18.sp
-                ),
-                modifier = Modifier.padding(vertical = 8.dp) // Espaciado vertical
-            )
-        } else if (locker == null) {
-            Text(
-                text = "Error al cargar los detalles del casillero.",
-                style = MaterialTheme.typography.bodyLarge.copy(
-                    color = MaterialTheme.colorScheme.error,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold
-                ),
-                modifier = Modifier.padding(vertical = 8.dp) // Espaciado vertical
-            )
-        } else {
-
-
-
-            Box(
-                modifier = Modifier
-                    .size(220.dp)
-                    .background(
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
-                        shape = CircleShape
-                    ) // Fondo blanco
-                    .padding(24.dp) // Espaciado interno
-            ) {
-                Image(
-                    painter = painterResource(id = R.drawable.lockertwo),
-                    contentDescription = "Imagen del Casillero",
-                    modifier = Modifier
-                        .size(200.dp) // Cambia el tamaño según lo que necesites
-                        .clip(CircleShape) // Recorte en círculo
-                )
-            }
-
-            Text(
-                text = "Codigo de Casilero: ${locker.id}",  // Mostrar el ID del casillero
+                text = "Detalles del Casillero",
                 style = MaterialTheme.typography.titleLarge.copy(
                     fontWeight = FontWeight.Bold,
                     fontSize = 24.sp,
-                    letterSpacing = 0.5.sp,
-                    color = MaterialTheme.colorScheme.onBackground
+                    color = MaterialTheme.colorScheme.primary
                 ),
-                modifier = Modifier.padding(vertical = 8.dp)
+                modifier = Modifier.padding(bottom = 16.dp) // Espaciado inferior
             )
+        }
 
-
-            Text(
-                text = if (locker.occupied) "Estado: Ocupado" else "Estado: Libre",
-                style = MaterialTheme.typography.bodyLarge.copy(
-                    color = if (locker.occupied) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
-                    fontSize = 20.sp,
-                    fontStyle = androidx.compose.ui.text.font.FontStyle.Italic // Usa la referencia completa
-                ),
-                modifier = Modifier.padding(vertical = 8.dp)
-            )
-
-            locker.reservationEndTime?.let { endTime ->
+        item {
+            if (isLoading) {
                 Text(
-                    text = "Reservado hasta: ${formatTime(endTime)}",
-                    style = MaterialTheme.typography.bodySmall.copy(
-                        fontSize = 16.sp,
-                        color = Color(0xFF757575),
-                        fontWeight = FontWeight.Light
+                    text = "Cargando...",
+                    style = MaterialTheme.typography.bodyLarge.copy(
+                        color = MaterialTheme.colorScheme.secondary,
+                        fontSize = 18.sp
+                    ),
+                    modifier = Modifier.padding(vertical = 8.dp) // Espaciado vertical
+                )
+            } else if (locker == null) {
+                Text(
+                    text = "Error al cargar los detalles del casillero.",
+                    style = MaterialTheme.typography.bodyLarge.copy(
+                        color = MaterialTheme.colorScheme.error,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold
+                    ),
+                    modifier = Modifier.padding(vertical = 8.dp) // Espaciado vertical
+                )
+            } else {
+
+
+                Box(
+                    modifier = Modifier
+                        .size(220.dp)
+                        .background(
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
+                            shape = CircleShape
+                        ) // Fondo blanco
+                        .padding(24.dp) // Espaciado interno
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.logo),
+                        contentDescription = "Imagen del Casillero",
+                        modifier = Modifier
+                            .size(200.dp) // Cambia el tamaño según lo que necesites
+                            .clip(CircleShape) // Recorte en círculo
+                    )
+                }
+
+                Text(
+                    text = "Codigo de Casilero: ${locker.id}",  // Mostrar el ID del casillero
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 24.sp,
+                        letterSpacing = 0.5.sp,
+                        color = MaterialTheme.colorScheme.onBackground
                     ),
                     modifier = Modifier.padding(vertical = 8.dp)
                 )
-            }
 
-            // Lógica del switch del casillero
-            if (locker.occupied) {
-                if (locker.userId == FirebaseAuth.getInstance().currentUser?.uid) {
-                    var isOpen by remember { mutableStateOf(locker.open) }
+                Text(
+                    text = if (locker.occupied) "Estado: Ocupado" else "Estado: Libre",
+                    style = MaterialTheme.typography.bodyLarge.copy(
+                        color = if (locker.occupied) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+                        fontSize = 20.sp,
+                        fontStyle = androidx.compose.ui.text.font.FontStyle.Italic // Usa la referencia completa
+                    ),
+                    modifier = Modifier.padding(vertical = 8.dp)
+                )
 
-                    // Switch para abrir/cerrar el casillero
-                    Switch(
-                        checked = isOpen,
-                        onCheckedChange = { checked ->
-                            isOpen = checked
-                            lockerViewModel.updateLockerOpenState(lockerId, checked)
-                        }
-                    )
+                locker.reservationEndTime?.let { endTime ->
                     Text(
-                        text = if (isOpen) "Casillero Abierto" else "Casillero Cerrado",
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            fontSize = 16.sp
-                        ),
-                        modifier = Modifier.padding(vertical = 8.dp) // Espaciado vertical
-                    )
-                    // Mostrar los correos de usuarios permitidos solo si el usuario es el propietario
-                    Text(
-                        text = "Usuarios Permitidos:",
-                        style = MaterialTheme.typography.bodyLarge.copy(
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 18.sp,
-                            color = MaterialTheme.colorScheme.onBackground
+                        text = "Reservado hasta: ${formatTime(endTime)}",
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            fontSize = 16.sp,
+                            color = Color(0xFF757575),
+                            fontWeight = FontWeight.Light
                         ),
                         modifier = Modifier.padding(vertical = 8.dp)
                     )
+                }
 
-                    // Mostrar la lista de correos de usuarios permitidos
-                    sharedWithEmails.forEach { email ->
+                Text(
+                    text = "Usuarios Permitidos:",
+                    style = MaterialTheme.typography.bodyLarge.copy(
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp,
+                        color = MaterialTheme.colorScheme.onBackground
+                    ),
+                    modifier = Modifier.padding(vertical = 8.dp)
+                )
+
+                sharedWithEmails.forEach { email ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         Text(
                             text = email,
                             style = MaterialTheme.typography.bodyMedium.copy(
                                 fontSize = 16.sp,
                                 color = MaterialTheme.colorScheme.onBackground
                             ),
-                            modifier = Modifier.padding(vertical = 4.dp)
+                            modifier = Modifier.weight(1f)
                         )
-                    }
-                } else if (locker.sharedWithEmails.contains(FirebaseAuth.getInstance().currentUser?.email)) {
-                    var isOpen by remember { mutableStateOf(locker.open) }
-
-                    // Switch para abrir/cerrar el casillero
-                    Switch(
-                        checked = isOpen,
-                        onCheckedChange = { checked ->
-                            isOpen = checked
-                            lockerViewModel.updateLockerOpenState(lockerId, checked)
-                        }
-                    )
-                    Text(
-                        text = if (isOpen) "Casillero Abierto" else "Casillero Cerrado",
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            fontSize = 16.sp
-                        ),
-                        modifier = Modifier.padding(vertical = 8.dp) // Espaciado vertical
-                    )
-                } else {
-                    Text(
-                        text = "No tienes permisos para gestionar la apertura de este casillero.",
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            fontSize = 16.sp
-                        ),
-                        modifier = Modifier.padding(vertical = 8.dp) // Espaciado vertical
-                    )
-                }
-            } else {
-                Text(
-                    text = "Este casillero está libre.",
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        fontSize = 16.sp
-                    ),
-                    modifier = Modifier.padding(vertical = 8.dp) // Espaciado vertical
-                )
-            }
-
-            if (locker.occupied && locker.userId == FirebaseAuth.getInstance().currentUser?.uid) {
-                Button(
-                    onClick = { showShareAccessDialog = true },
-                    modifier = Modifier
-                        .padding(16.dp) // Margen alrededor del botón
-                        .fillMaxWidth(), // Ocupa el ancho completo
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFFD6C215),  // Color de fondo del botón
-                        contentColor = Color.White           // Color del texto dentro del botón
-                    ),
-                    shape = RoundedCornerShape(8.dp),       // Bordes redondeados
-                    border = BorderStroke(2.dp, Color.Black) // Borde negro alrededor del botón
-                ) {
-                    Text(
-                        text = "+ Añadir mas Usuarios",
-                        fontSize = 18.sp                    // Tamaño de fuente del texto
-                    )
-                }
-            }
-
-
-
-            if (!locker.occupied) {
-                Button(
-                    onClick = { showTimeDialog = true },  // Mostrar diálogo para seleccionar tiempo
-                    modifier = Modifier
-                        .padding(16.dp) // Margen alrededor del botón
-                        .fillMaxWidth(), // Ocupa el ancho completo
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFFD6C215),  // Color de fondo del botón
-                        contentColor = Color.White           // Color del texto dentro del botón
-                    ),
-                    shape = RoundedCornerShape(8.dp),       // Bordes redondeados
-                    border = BorderStroke(2.dp, Color.Black) // Borde negro alrededor del botón
-                ) {
-                    Text(
-                        text = "Reservar",
-                        fontSize = 18.sp                    // Tamaño de fuente del texto
-                    )
-                }
-            }
-
-            if (locker != null) {
-                // Verifica si el casillero está ocupado y pertenece al usuario actual
-                if (locker.occupied
-                    && locker.userId == FirebaseAuth.getInstance().currentUser?.uid
-                    && locker.reservationEndTime != null
-                    && locker.reservationEndTime > System.currentTimeMillis()
-                ) {
-                    // Botón para finalizar la reserva
-                    Button(onClick = { showEndReservationDialog = true }) {
-                        Text("Finalizar Reserva")
-                    }
-
-                    // Diálogo de confirmación
-                    if (showEndReservationDialog) {
-                        AlertDialog(
-                            onDismissRequest = { showEndReservationDialog = false },
-                            title = {
-                                Text(
-                                    text = "Has retirado tus pertenencias?",
-                                    style = MaterialTheme.typography.titleMedium.copy(
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                )
-                            },
-                            text = {
-                                Text(
-                                    text = "Confirma que has retirado tus pertenencias para finalizar la reserva.",
-                                    style = MaterialTheme.typography.bodyMedium
-                                )
-                            },
-                            confirmButton = {
-                                Button(
-                                    onClick = {
-                                        showEndReservationDialog = false
-                                        isCountdownActive = true // Inicia la cuenta regresiva
-
-                                        // Iniciar la cuenta regresiva
-                                        countdownJob = CoroutineScope(Dispatchers.Main).launch {
-                                            while (countdownTime > 0) {
-                                                delay(1000L) // Espera 1 segundo
-                                                countdownTime -= 1
-                                            }
-                                            // Finalizar la reserva cuando la cuenta regresiva termine
-                                            lockerViewModel.endReservation(
-                                                lockerId,
-                                                onSuccess = {
-                                                    // Actualizar el estado del casillero a cerrado
-                                                    lockerViewModel.updateLockerOpenState(
-                                                        lockerId,
-                                                        isOpen = false
-                                                    ) // Asegúrate de pasar 'isOpen' aquí
-                                                    Toast.makeText(
-                                                        context,
-                                                        "Reserva finalizada",
-                                                        Toast.LENGTH_SHORT
-                                                    ).show()
-                                                },
-                                                onFailure = { error ->
-                                                    Toast.makeText(
-                                                        context,
-                                                        "Error: $error",
-                                                        Toast.LENGTH_SHORT
-                                                    ).show()
-                                                }
-                                            )
-                                            isCountdownActive = false
-                                        }
+                        IconButton(
+                            onClick = {
+                                lockerViewModel.removeSharedAccess(
+                                    lockerId,
+                                    email,
+                                    onSuccess = {
+                                        sharedWithEmails = sharedWithEmails.toMutableList().apply { remove(email) }
+                                        Toast.makeText(context, "Acceso eliminado", Toast.LENGTH_SHORT).show()
+                                    },
+                                    onFailure = { error ->
+                                        Toast.makeText(context, "Error: $error", Toast.LENGTH_SHORT).show()
                                     }
-                                ) {
-                                    Text("Sí")
-                                }
-                            },
-                            dismissButton = {
-                                Button(onClick = { showEndReservationDialog = false }) {
-                                    Text("No")
-                                }
+                                )
+                            }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Delete,
+                                contentDescription = "Eliminar acceso"
+                            )
+                        }
+                    }
+                }
+
+                // Lógica del switch del casillero
+                if (locker.occupied) {
+                    if (locker.userId == FirebaseAuth.getInstance().currentUser?.uid) {
+                        var isOpen by remember { mutableStateOf(locker.open) }
+
+                        // Switch para abrir/cerrar el casillero
+                        Switch(
+                            checked = isOpen,
+                            onCheckedChange = { checked ->
+                                isOpen = checked
+                                lockerViewModel.updateLockerOpenState(lockerId, checked)
                             }
                         )
-                    }
-
-                    // Barra de cuenta regresiva y botón de cancelar
-                    if (isCountdownActive) {
-                        // Mostrar barra de progreso (de 5 segundos)
-                        LinearProgressIndicator(
-                            progress = (5 - countdownTime) / 5f,
-                            modifier = Modifier.fillMaxWidth()
-                        )
                         Text(
-                            text = "Finalizando en $countdownTime segundos...",
+                            text = if (isOpen) "Casillero Abierto" else "Casillero Cerrado",
                             style = MaterialTheme.typography.bodyMedium.copy(
-                                color = MaterialTheme.colorScheme.onBackground
+                                fontSize = 16.sp
                             ),
                             modifier = Modifier.padding(vertical = 8.dp) // Espaciado vertical
                         )
 
-                        // Botón para cancelar la finalización
-                        Button(onClick = {
-                            countdownJob?.cancel() // Cancelar la cuenta regresiva
-                            countdownJob = null // Limpiar la referencia del Job
-                            isCountdownActive = false
-                            countdownTime = 5 // Restablecer el tiempo
-                        }) {
-                            Text("Cancelar Finalización")
+                    } else if (locker.sharedWithEmails.contains(FirebaseAuth.getInstance().currentUser?.email)) {
+                        var isOpen by remember { mutableStateOf(locker.open) }
+
+                        // Switch para abrir/cerrar el casillero
+                        Switch(
+                            checked = isOpen,
+                            onCheckedChange = { checked ->
+                                isOpen = checked
+                                lockerViewModel.updateLockerOpenState(lockerId, checked)
+                            }
+                        )
+                        Text(
+                            text = if (isOpen) "Casillero Abierto" else "Casillero Cerrado",
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                fontSize = 16.sp
+                            ),
+                            modifier = Modifier.padding(vertical = 8.dp) // Espaciado vertical
+                        )
+                    } else {
+                        Text(
+                            text = "No tienes permisos para gestionar la apertura de este casillero.",
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                fontSize = 16.sp
+                            ),
+                            modifier = Modifier.padding(vertical = 8.dp) // Espaciado vertical
+                        )
+                    }
+                } else {
+                    Text(
+                        text = "Este casillero está libre.",
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontSize = 16.sp
+                        ),
+                        modifier = Modifier.padding(vertical = 8.dp) // Espaciado vertical
+                    )
+                }
+
+
+                if (locker.occupied && locker.userId == FirebaseAuth.getInstance().currentUser?.uid) {
+                    Button(
+                        onClick = { showShareAccessDialog = true },
+                        modifier = Modifier
+                            .padding(16.dp) // Margen alrededor del botón
+                            .fillMaxWidth(), // Ocupa el ancho completo
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFFD6C215),  // Color de fondo del botón
+                            contentColor = Color.White           // Color del texto dentro del botón
+                        ),
+                        shape = RoundedCornerShape(8.dp),       // Bordes redondeados
+                        border = BorderStroke(2.dp, Color.Black) // Borde negro alrededor del botón
+                    ) {
+                        Text(
+                            text = "+ Añadir mas Usuarios",
+                            fontSize = 18.sp                    // Tamaño de fuente del texto
+                        )
+                    }
+                }
+
+                if (!locker.occupied) {
+                    Button(
+                        onClick = { showTimeDialog = true },  // Mostrar diálogo para seleccionar tiempo
+                        modifier = Modifier
+                            .padding(16.dp) // Margen alrededor del botón
+                            .fillMaxWidth(), // Ocupa el ancho completo
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFFD6C215),  // Color de fondo del botón
+                            contentColor = Color.White           // Color del texto dentro del botón
+                        ),
+                        shape = RoundedCornerShape(8.dp),       // Bordes redondeados
+                        border = BorderStroke(2.dp, Color.Black) // Borde negro alrededor del botón
+                    ) {
+                        Text(
+                            text = "Reservar",
+                            fontSize = 18.sp                    // Tamaño de fuente del texto
+                        )
+                    }
+                }
+
+                if (locker != null) {
+                    // Verifica si el casillero está ocupado y pertenece al usuario actual
+                    if (locker.occupied
+                        && locker.userId == FirebaseAuth.getInstance().currentUser?.uid
+                        && locker.reservationEndTime != null
+                        && locker.reservationEndTime > System.currentTimeMillis()
+                    ) {
+                        // Botón para finalizar la reserva
+                        Button(onClick = { showEndReservationDialog = true }) {
+                            Text("Finalizar Reserva")
+                        }
+
+                        // Diálogo de confirmación
+                        if (showEndReservationDialog) {
+                            AlertDialog(
+                                onDismissRequest = { showEndReservationDialog = false },
+                                title = {
+                                    Text(
+                                        text = "Has retirado tus pertenencias?",
+                                        style = MaterialTheme.typography.titleMedium.copy(
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    )
+                                },
+                                text = {
+                                    Text(
+                                        text = "Confirma que has retirado tus pertenencias para finalizar la reserva.",
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
+                                },
+                                confirmButton = {
+                                    Button(
+                                        onClick = {
+                                            showEndReservationDialog = false
+                                            isCountdownActive = true // Inicia la cuenta regresiva
+
+                                            // Iniciar la cuenta regresiva
+                                            countdownJob = CoroutineScope(Dispatchers.Main).launch {
+                                                while (countdownTime > 0) {
+                                                    delay(1000L) // Espera 1 segundo
+                                                    countdownTime -= 1
+                                                }
+                                                // Finalizar la reserva cuando la cuenta regresiva termine
+                                                lockerViewModel.endReservation(
+                                                    lockerId,
+                                                    onSuccess = {
+                                                        // Actualizar el estado del casillero a cerrado
+                                                        lockerViewModel.updateLockerOpenState(
+                                                            lockerId,
+                                                            isOpen = false
+                                                        ) // Asegúrate de pasar 'isOpen' aquí
+                                                        Toast.makeText(
+                                                            context,
+                                                            "Reserva finalizada",
+                                                            Toast.LENGTH_SHORT
+                                                        ).show()
+                                                    },
+                                                    onFailure = { error ->
+                                                        Toast.makeText(
+                                                            context,
+                                                            "Error: $error",
+                                                            Toast.LENGTH_SHORT
+                                                        ).show()
+                                                    }
+                                                )
+                                                isCountdownActive = false
+                                            }
+                                        }
+                                    ) {
+                                        Text("Sí")
+                                    }
+                                },
+                                dismissButton = {
+                                    Button(onClick = { showEndReservationDialog = false }) {
+                                        Text("No")
+                                    }
+                                }
+                            )
+                        }
+
+                        // Barra de cuenta regresiva y botón de cancelar
+                        if (isCountdownActive) {
+                            // Mostrar barra de progreso (de 5 segundos)
+                            LinearProgressIndicator(
+                                progress = (5 - countdownTime) / 5f,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                            Text(
+                                text = "Finalizando en $countdownTime segundos...",
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    color = MaterialTheme.colorScheme.onBackground
+                                ),
+                                modifier = Modifier.padding(vertical = 8.dp) // Espaciado vertical
+                            )
+
+                            // Botón para cancelar la finalización
+                            Button(onClick = {
+                                countdownJob?.cancel() // Cancelar la cuenta regresiva
+                                countdownJob = null // Limpiar la referencia del Job
+                                isCountdownActive = false
+                                countdownTime = 5 // Restablecer el tiempo
+                            }) {
+                                Text("Cancelar Finalización")
+                            }
                         }
                     }
                 }
             }
         }
-
-
     }
+
     // Diálogo para seleccionar tiempo de reserva
     if (showTimeDialog) {
         AlertDialog(
@@ -668,12 +698,13 @@ fun LockerDetailsScreen(
             }
         )
     }
-
 }
+
 fun formatTime(timeInMillis: Long): String {
     val dateFormat = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
     return dateFormat.format(timeInMillis)
 }
+
 @Composable
 fun CustomTimeDialog(
     onTimeSelected: (Long) -> Unit, // Se espera un tiempo en horas
