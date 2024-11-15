@@ -1,68 +1,65 @@
 package com.example.guardbox64.ui.viewmodel
 
+import android.os.Handler
 import android.os.Looper
 import android.util.Log
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.lifecycle.ViewModel
-import com.google.firebase.firestore.FirebaseFirestore
-import com.example.guardbox64.model.Locker
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseError
-import com.google.firebase.database.DatabaseReference
-import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.database.ValueEventListener
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import com.google.firebase.database.*
-import android.os.Handler
-import androidx.compose.runtime.remember
+import androidx.lifecycle.ViewModel
+import com.example.guardbox64.model.Locker
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.*
+
 
 class LockerViewModel : ViewModel() {
+    // REFERENCIAS A FIREBASE
     private val database: DatabaseReference = FirebaseDatabase.getInstance().getReference("lockers")
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
 
+    // REFERENCIAS LIVEDATA
+    // LISTA DE CASILLEROS
     private val _lockers = MutableLiveData<List<Locker>>(emptyList())
     val lockers: LiveData<List<Locker>> = _lockers
+    // ESTADO DE LA APERTURA
+    private val _lockerOpenState = MutableLiveData<Boolean>()
+    val lockerOpenState: LiveData<Boolean> = _lockerOpenState
+    // ESTADO DE LA LISTA DE USUARIOS COMPARTIDOS
+    private val _sharedWithEmails = MutableLiveData<List<String>>(emptyList())
+    val sharedWithEmails: LiveData<List<String>> = _sharedWithEmails
 
+    // INICIALIZARLA CARGA DE CASILLEROS A PENAS EL USUARIO SE LOGEE
     init {
-        // Observar el estado de autenticación de Firebase
         auth.addAuthStateListener { firebaseAuth ->
             if (firebaseAuth.currentUser != null) {
                 loadLockers()
             }
         }
     }
+
     fun reserveLocker(
         lockerId: String,
         userId: String,
-        reservationEndTime: Long?,  // Cambiar Long a Long?
+        reservationEndTime: Long?,
         onSuccess: () -> Unit,
         onFailure: (String) -> Unit
     ) {
-
-
         val lockerRef = database.child(lockerId)
-        val updates = mapOf<String, Any?>(  // Cambiar Any a Any?
+        val updates = mapOf<String, Any?>(
             "occupied" to true,
             "userId" to userId,
-            "reservationEndTime" to reservationEndTime // Ahora puede ser null
+            "reservationEndTime" to reservationEndTime
         )
-
-        // Actualiza los campos ocupados y userId en una sola llamada
         lockerRef.updateChildren(updates)
             .addOnSuccessListener {
-                if (reservationEndTime != null) {  // Solo iniciar el temporizador si reservationEndTime no es null
-                    startReservationTimer(lockerId, reservationEndTime)  // Agrega esto
+                if (reservationEndTime != null) {
+                    startReservationTimer(lockerId, reservationEndTime)
                 }
-                onSuccess() // Notificar éxito
+                onSuccess()
             }
             .addOnFailureListener { e ->
                 onFailure("Error reservando el casillero: ${e.message}")
             }
     }
-
 
     fun loadLockers() {
         val user = auth.currentUser
@@ -79,27 +76,23 @@ class LockerViewModel : ViewModel() {
                                 ?.copy(id = lockerSnapshot.key ?: "")
                             if (locker != null && locker.id !in lockerIds) {
                                 // Verifica si la reserva ha expirado
-                                if (locker.reservationEndTime != null) {
-                                    val reservationEndTimeString = locker.reservationEndTime.toString()
-                                    val reservationEndTime = reservationEndTimeString.toLongOrNull()
-                                    if (reservationEndTime != null && reservationEndTime <= currentTime) {
-                                        // Si la reserva ha expirado, actualiza el casillero a no ocupado
-                                        synchronized(this) {
-                                            val lockerRef = database.child(locker.id)
-                                            val updates = mapOf(
-                                                "occupied" to false,
-                                                "userId" to "",
-                                                "reservationEndTime" to null,
-                                                "sharedWithEmails" to emptyList<String>(),
-                                                )
-                                            lockerRef.updateChildren(updates)
-                                                .addOnSuccessListener {
-                                                    Log.d("Firebase", "Casillero ${locker.id} actualizado correctamente.")
-                                                }
-                                                .addOnFailureListener { e ->
-                                                    Log.e("Firebase", "Error al actualizar casillero ${locker.id}: ${e.message}")
-                                                }
-                                        }
+                                if (locker.reservationEndTime != null && locker.reservationEndTime <= currentTime) {
+                                    // Si la reserva ha expirado, actualiza el casillero a no ocupado
+                                    synchronized(this) {
+                                        val lockerRef = database.child(locker.id)
+                                        val updates = mapOf(
+                                            "occupied" to false,
+                                            "userId" to "",
+                                            "reservationEndTime" to null,
+                                            "sharedWithEmails" to emptyList<String>(),
+                                        )
+                                        lockerRef.updateChildren(updates)
+                                            .addOnSuccessListener {
+                                                Log.d("Firebase", "Casillero ${locker.id} actualizado correctamente.")
+                                            }
+                                            .addOnFailureListener { e ->
+                                                Log.e("Firebase", "Error al actualizar casillero ${locker.id}: ${e.message}")
+                                            }
                                     }
                                 }
 
@@ -127,6 +120,7 @@ class LockerViewModel : ViewModel() {
             Log.e("Firebase", "Usuario no autenticado")
         }
     }
+
     fun updateLockerOpenState(lockerId: String, isOpen: Boolean) {
         val lockerRef = database.child(lockerId)
         lockerRef.child("open").setValue(isOpen)
@@ -140,6 +134,7 @@ class LockerViewModel : ViewModel() {
                 }
             }
     }
+
     private fun startReservationTimer(lockerId: String, reservationEndTime: Long) {
         val currentTime = System.currentTimeMillis()
 
@@ -150,37 +145,39 @@ class LockerViewModel : ViewModel() {
             }, delayInMillis)
         }
     }
+
     private fun expireReservation(lockerId: String) {
         val lockerRef = database.child(lockerId)
-        val updates = mapOf<String, Any>(
+        val updates = mapOf<String, Any?>(
             "occupied" to false,
             "userId" to "",
+            "reservationEndTime" to null,
             "sharedWithEmails" to emptyList<String>(),
-            )
+        )
 
         lockerRef.updateChildren(updates)
             .addOnSuccessListener {
                 android.util.Log.d("Firebase", "Reserva del casillero expirada correctamente.")
             }
-            .addOnFailureListener { e:Exception ->
+            .addOnFailureListener { e: Exception ->
                 android.util.Log.e("Firebase", "Error al expirar reserva del casillero: ${e.message}")
             }
     }
+
     fun endReservation(lockerId: String, onSuccess: () -> Unit, onFailure: (String) -> Unit) {
         val lockerRef = database.child(lockerId)
-        val updates = mapOf<String, Any>(
+        val updates = mapOf<String, Any?>(
             "occupied" to false,
             "userId" to "",
+            "reservationEndTime" to null,
             "sharedWithEmails" to emptyList<String>(),
-
-
-            )
-
+        )
 
         lockerRef.updateChildren(updates)
             .addOnSuccessListener { onSuccess() }
             .addOnFailureListener { e -> onFailure(e.message ?: "Error desconocido") }
     }
+
     fun shareLockerAccess(
         lockerId: String,
         newEmail: String,
@@ -231,6 +228,7 @@ class LockerViewModel : ViewModel() {
                 }
             }
     }
+
     fun removeSharedAccess(
         lockerId: String,
         emailToRemove: String,
@@ -264,6 +262,7 @@ class LockerViewModel : ViewModel() {
             }
         })
     }
+
     fun observeLockerOpenState(lockerId: String, onStateChanged: (Boolean) -> Unit) {
         val lockerRef = database.child(lockerId).child("open")
         lockerRef.addValueEventListener(object : ValueEventListener {
@@ -277,6 +276,19 @@ class LockerViewModel : ViewModel() {
             }
         })
     }
+
+    fun observeSharedWithEmails(lockerId: String) {
+        val sharedWithEmailsRef = database.child(lockerId).child("sharedWithEmails")
+        sharedWithEmailsRef.addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val emails = snapshot.getValue(object : GenericTypeIndicator<List<String>>() {}) ?: emptyList()
+                // Actualizar el LiveData con la lista de correos sin duplicados
+                _sharedWithEmails.value = emails.distinct()
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                Log.e("Firebase", "Error al observar la lista de usuarios permitidos: ${error.message}")
+            }
+        })
+    }
 }
-
-

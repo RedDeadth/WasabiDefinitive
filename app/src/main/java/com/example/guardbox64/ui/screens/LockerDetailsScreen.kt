@@ -98,6 +98,20 @@ fun LockerDetailsScreen(
 
     val isLoading = locker == null
 
+    // Observar el estado de apertura del casillero
+    val lockerOpenState by lockerViewModel.lockerOpenState.observeAsState(false)
+
+    // Observar la lista de usuarios compartidos
+    val sharedWithEmailsLiveData by lockerViewModel.sharedWithEmails.observeAsState(emptyList())
+    LaunchedEffect(sharedWithEmailsLiveData) {
+        sharedWithEmails = sharedWithEmailsLiveData.toMutableList()
+    }
+
+    // Recuperar la lista de usuarios permitidos cuando se carga la pantalla
+    LaunchedEffect(lockerId) {
+        lockerViewModel.observeSharedWithEmails(lockerId)
+    }
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -139,7 +153,6 @@ fun LockerDetailsScreen(
                     modifier = Modifier.padding(vertical = 8.dp) // Espaciado vertical
                 )
             } else {
-
 
                 Box(
                     modifier = Modifier
@@ -192,48 +205,51 @@ fun LockerDetailsScreen(
                     )
                 }
 
-                Text(
-                    text = "Usuarios Permitidos:",
-                    style = MaterialTheme.typography.bodyLarge.copy(
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp,
-                        color = MaterialTheme.colorScheme.onBackground
-                    ),
-                    modifier = Modifier.padding(vertical = 8.dp)
-                )
+                // Mostrar "Usuarios Permitidos" solo si hay usuarios permitidos
+                if (sharedWithEmails.isNotEmpty()) {
+                    Text(
+                        text = "Usuarios Permitidos:",
+                        style = MaterialTheme.typography.bodyLarge.copy(
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 18.sp,
+                            color = MaterialTheme.colorScheme.onBackground
+                        ),
+                        modifier = Modifier.padding(vertical = 8.dp)
+                    )
 
-                sharedWithEmails.forEach { email ->
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = email,
-                            style = MaterialTheme.typography.bodyMedium.copy(
-                                fontSize = 16.sp,
-                                color = MaterialTheme.colorScheme.onBackground
-                            ),
-                            modifier = Modifier.weight(1f)
-                        )
-                        IconButton(
-                            onClick = {
-                                lockerViewModel.removeSharedAccess(
-                                    lockerId,
-                                    email,
-                                    onSuccess = {
-                                        sharedWithEmails = sharedWithEmails.toMutableList().apply { remove(email) }
-                                        Toast.makeText(context, "Acceso eliminado", Toast.LENGTH_SHORT).show()
-                                    },
-                                    onFailure = { error ->
-                                        Toast.makeText(context, "Error: $error", Toast.LENGTH_SHORT).show()
-                                    }
+                    sharedWithEmails.forEach { email ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = email,
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    fontSize = 16.sp,
+                                    color = MaterialTheme.colorScheme.onBackground
+                                ),
+                                modifier = Modifier.weight(1f)
+                            )
+                            IconButton(
+                                onClick = {
+                                    lockerViewModel.removeSharedAccess(
+                                        lockerId,
+                                        email,
+                                        onSuccess = {
+                                            sharedWithEmails = sharedWithEmails.toMutableList().apply { remove(email) }
+                                            Toast.makeText(context, "Acceso eliminado", Toast.LENGTH_SHORT).show()
+                                        },
+                                        onFailure = { error ->
+                                            Toast.makeText(context, "Error: $error", Toast.LENGTH_SHORT).show()
+                                        }
+                                    )
+                                }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Delete,
+                                    contentDescription = "Eliminar acceso"
                                 )
                             }
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Delete,
-                                contentDescription = "Eliminar acceso"
-                            )
                         }
                     }
                 }
@@ -241,7 +257,7 @@ fun LockerDetailsScreen(
                 // Lógica del switch del casillero
                 if (locker.occupied) {
                     if (locker.userId == FirebaseAuth.getInstance().currentUser?.uid) {
-                        var isOpen by remember { mutableStateOf(locker.open) }
+                        var isOpen by remember { mutableStateOf(lockerOpenState) }
 
                         // Switch para abrir/cerrar el casillero
                         Switch(
@@ -260,7 +276,7 @@ fun LockerDetailsScreen(
                         )
 
                     } else if (locker.sharedWithEmails.contains(FirebaseAuth.getInstance().currentUser?.email)) {
-                        var isOpen by remember { mutableStateOf(locker.open) }
+                        var isOpen by remember { mutableStateOf(lockerOpenState) }
 
                         // Switch para abrir/cerrar el casillero
                         Switch(
@@ -295,7 +311,6 @@ fun LockerDetailsScreen(
                         modifier = Modifier.padding(vertical = 8.dp) // Espaciado vertical
                     )
                 }
-
 
                 if (locker.occupied && locker.userId == FirebaseAuth.getInstance().currentUser?.uid) {
                     Button(
@@ -477,7 +492,7 @@ fun LockerDetailsScreen(
                             }
                         )
                     }) {
-                        Text("1 hora")
+                        Text("1 hora = S/.1.60")
                     }
                     Spacer(modifier = Modifier.height(8.dp))
 
@@ -502,7 +517,7 @@ fun LockerDetailsScreen(
                             }
                         )
                     }) {
-                        Text("2 horas")
+                        Text("2 horas = S/.2.40")
                     }
                     Spacer(modifier = Modifier.height(8.dp))
 
@@ -527,7 +542,7 @@ fun LockerDetailsScreen(
                             }
                         )
                     }) {
-                        Text("5 horas")
+                        Text("5 horas = S/.8.00")
                     }
                     Spacer(modifier = Modifier.height(8.dp))
 
@@ -552,7 +567,7 @@ fun LockerDetailsScreen(
                             }
                         )
                     }) {
-                        Text("12 horas")
+                        Text("12 horas = S/.19.20")
                     }
                     Spacer(modifier = Modifier.height(8.dp))
 
