@@ -103,6 +103,8 @@ fun LockerDetailsScreen(
 
     // Observar la lista de usuarios compartidos
     val sharedWithEmailsLiveData by lockerViewModel.sharedWithEmails.observeAsState(emptyList())
+
+    // Actualizar la lista de correos compartidos cuando cambie
     LaunchedEffect(sharedWithEmailsLiveData) {
         sharedWithEmails = sharedWithEmailsLiveData.toMutableList()
     }
