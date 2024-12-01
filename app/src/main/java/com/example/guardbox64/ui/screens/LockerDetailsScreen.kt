@@ -1,4 +1,4 @@
-package com.example.guardbox64.ui.screens
+ package com.example.guardbox64.ui.screens
 
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.foundation.BorderStroke
@@ -90,6 +90,8 @@ fun LockerDetailsScreen(
     var isCountdownActive by remember { mutableStateOf(false) }
     var countdownTime by remember { mutableStateOf(5) }
     var countdownJob: Job? by remember { mutableStateOf(null) }
+    var showPaymentDialog by remember { mutableStateOf(false) }
+    var calculatedCost by remember { mutableStateOf(0) }
 
     var showShareAccessDialog by remember { mutableStateOf(false) }
     val currentUserEmail = FirebaseAuth.getInstance().currentUser?.email
