@@ -11,7 +11,9 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
@@ -26,7 +28,12 @@ import com.example.guardbox64.model.Locker
 import com.example.guardbox64.ui.viewmodel.LockerViewModel
 import com.google.firebase.auth.FirebaseAuth
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Shield
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.ArrowDropUp
+import androidx.compose.material3.Icon
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
@@ -47,107 +54,176 @@ fun LockerListScreen(
         locker.sharedWithEmails.contains(FirebaseAuth.getInstance().currentUser?.email)
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFFFFA25D)) // Cambia el fondo a naranja
-            .padding(16.dp)
-    ) {
-        // Sección de casilleros reservados
-        if (reservedLockers.isNotEmpty()) {
-            Text(
-                text = "Mis Casilleros",
-                style = MaterialTheme.typography.titleLarge.copy(
-                    color = Color.Black,
-                    fontWeight = FontWeight.Bold
+    val currentUser = FirebaseAuth.getInstance().currentUser
+
+    Scaffold(
+        topBar = {
+            // Barra superior con el título
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color(0xFFFD7E36))
+
+                    .padding(8.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Shield,
+                    contentDescription = "Escudo",
+                    modifier = Modifier.size(24.dp),
+                    tint = Color.Black
                 )
-            )
-            LazyRow(
-                contentPadding = PaddingValues(vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(reservedLockers) { locker ->
-                    LockerItem(locker = locker, index = 0) { // Pasar un índice fijo para evitar errores
-                        navController.navigate("locker_details/${locker.id}")
-                    }
-                }
-            }
-        }
-
-        // Sección de casilleros compartidos
-        if (sharedLockers.isNotEmpty()) {
-            Text(
-                text = "Casilleros Compartidos",
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.primary
-            )
-            LazyColumn(
-                contentPadding = PaddingValues(vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(sharedLockers) { locker ->
-                    LockerItem(locker = locker, index = 0) { // Pasar un índice fijo para evitar errores
-                        navController.navigate("locker_details/${locker.id}")
-                    }
-                }
-            }
-        }
-
-        // Sección de casilleros libres
-        if (freeLockers.isNotEmpty()) {
-            Text(
-                text = "Casilleros Libres",
-                style = MaterialTheme.typography.titleLarge.copy(
-                    color = Color.Black,
-                    fontWeight = FontWeight.Bold
+                Text(
+                    text = "GuardianBox",
+                    style = MaterialTheme.typography.headlineMedium.copy(
+                        fontWeight = FontWeight.Bold, // Título en negrita
+                        color = Color.Black,
+                        fontSize = 24.sp,
+                    ),
+                    modifier = Modifier.align(Alignment.Center)
                 )
-            )
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(4), // 4 columnas
-                contentPadding = PaddingValues(vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                itemsIndexed(freeLockers) { index, locker ->
-                    LockerItem(locker = locker, index = index) {
-                        navController.navigate("locker_details/${locker.id}")
+            }
+        },
+        bottomBar = {
+            // Barra inferior con el nombre del usuario y el botón de cerrar sesión
+            if (currentUser != null) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color(0xFFFEFEFE)) // Color de fondo gris claro para la barra inferior
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Person,
+                        contentDescription = "Persona",
+                        modifier = Modifier.size(24.dp),
+                        tint = Color.Black
+                    )
+                    Text(
+                        text = "${currentUser.displayName ?: currentUser.email}",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = Color.Black
+                    )
+                    // Aquí puedes poner un botón de cerrar sesión (aún no funcional)
+                    Button(onClick = { /* Lógica de cerrar sesión */ }) {
+                        Text(text = "Cerrar sesión")
                     }
                 }
             }
-
-
         }
-
-        // Sección de casilleros ocupados
-        if (occupiedLockers.isNotEmpty()) {
-            Text(
-                text = "Casilleros Ocupados",
-                style = MaterialTheme.typography.titleLarge.copy(
-                    color = Color.Black,
-                    fontWeight = FontWeight.Bold
+    ) { paddingValues ->
+        // Contenido principal de la pantalla
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color(0xFFFFA25D))
+                .padding(16.dp)
+                .padding(
+                    top = paddingValues.calculateTopPadding(), // Evitar que el contenido se solape con la barra superior
+                    bottom = paddingValues.calculateBottomPadding()
                 )
-            )
-            LazyColumn(
-                contentPadding = PaddingValues(vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(occupiedLockers) { locker ->
-                    LockerItem(locker = locker, index = 0) { // Pasar un índice fijo para evitar errores
-                        navController.navigate("locker_details/${locker.id}")
+        ) {
+            // Sección de casilleros reservados
+            if (reservedLockers.isNotEmpty()) {
+                Text(
+                    text = "Mis Casilleros",
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        color = Color.Black,
+                        fontWeight = FontWeight.Bold // Título en negrita
+                    )
+                )
+                LazyRow(
+                    contentPadding = PaddingValues(vertical = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(reservedLockers) { locker ->
+                        LockerItem(locker = locker, index = 0) {
+                            navController.navigate("locker_details/${locker.id}")
+                        }
                     }
                 }
             }
-        }
 
-        if (uniqueLockers.isEmpty()) {
-            Text(
-                text = "No hay casilleros disponibles.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-        }
+            // Sección de casilleros compartidos
+            if (sharedLockers.isNotEmpty()) {
+                Text(
+                    text = "Casilleros Compatidos",
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        color = Color.Black,
+                        fontWeight = FontWeight.Bold // Título en negrita
+                    )
+                )
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(4), // 4 columnas
+                    contentPadding = PaddingValues(vertical = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    itemsIndexed(freeLockers) { index, locker ->
+                        LockerItem(locker = locker, index = index) {
+                            navController.navigate("locker_details/${locker.id}")
+                        }
+                    }
+                }
+            }
 
-        Spacer(modifier = Modifier.height(16.dp))
+            // Sección de casilleros libres
+            if (freeLockers.isNotEmpty()) {
+                Text(
+                    text = "Casilleros Libres",
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        color = Color.Black,
+                        fontWeight = FontWeight.Bold // Título en negrita
+                    )
+                )
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(4), // 4 columnas
+                    contentPadding = PaddingValues(vertical = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    itemsIndexed(freeLockers) { index, locker ->
+                        LockerItem(locker = locker, index = index) {
+                            navController.navigate("locker_details/${locker.id}")
+                        }
+                    }
+                }
+            }
+
+            // Sección de casilleros ocupados
+            if (occupiedLockers.isNotEmpty()) {
+                Text(
+                    text = "Casilleros Ocupados",
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        color = Color.Black,
+                        fontWeight = FontWeight.Bold // Título en negrita
+                    )
+                )
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(4), // 4 columnas
+                    contentPadding = PaddingValues(vertical = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    itemsIndexed(freeLockers) { index, locker ->
+                        LockerItem(locker = locker, index = index) {
+                            navController.navigate("locker_details/${locker.id}")
+                        }
+                    }
+                }
+            }
+
+            if (uniqueLockers.isEmpty()) {
+                Text(
+                    text = "No hay casilleros disponibles.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+        }
     }
 }
 

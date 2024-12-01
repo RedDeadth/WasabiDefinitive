@@ -53,7 +53,8 @@ android {
 }
 
 dependencies {
-
+    //ICONOS
+    implementation ("androidx.compose.material:material-icons-extended:1.5.0")
     //FIREBASE
     implementation(platform("com.google.firebase:firebase-bom:32.7.3"))
     implementation("com.google.firebase:firebase-analytics")
