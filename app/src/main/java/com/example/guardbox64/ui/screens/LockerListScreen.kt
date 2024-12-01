@@ -36,6 +36,7 @@ import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.ArrowDropUp
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
@@ -70,14 +71,14 @@ fun LockerListScreen(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Color(0xFFFD7E36))
+                    .background(Color(0xFFFD7E36)) // Color de fondo del TopBar
                     .padding(8.dp)
             ) {
                 Icon(
                     imageVector = Icons.Filled.Shield,
                     contentDescription = "Escudo",
                     modifier = Modifier.size(24.dp),
-                    tint = Color.Black
+                    tint = Color.Black // Color del icono de escudo
                 )
                 Text(
                     text = "GuardianBox",
@@ -95,7 +96,7 @@ fun LockerListScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(Color(0xFFFEFEFE))
+                        .background(Color(0xFFFD7E36)) // Color de fondo del BottomBar, igual al TopBar
                         .padding(16.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
@@ -104,21 +105,24 @@ fun LockerListScreen(
                         imageVector = Icons.Filled.Person,
                         contentDescription = "Persona",
                         modifier = Modifier.size(24.dp),
-                        tint = Color.Black
+                        tint = Color.Black // Color del icono de la persona
                     )
                     Text(
                         text = "${currentUser.displayName ?: currentUser.email}",
                         style = MaterialTheme.typography.bodyLarge,
                         color = Color.Black
                     )
-                    Button(onClick = { /* Lógica de cerrar sesión */ }) {
-                        Text(text = "Cerrar sesión")
+                    Button(
+                        onClick = { /* Lógica de cerrar sesión */ },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color.Red) // Fondo rojo del botón
+                    ) {
+                        Text(text = "Cerrar sesión", color = Color.White) // Texto en blanco
                     }
                 }
             }
         }
     ) { paddingValues ->
-        Column(
+    Column(
             modifier = Modifier
                 .fillMaxSize()
                 .background(Color(0xFFFFA25D))
@@ -126,6 +130,7 @@ fun LockerListScreen(
                 .padding(
                     top = paddingValues.calculateTopPadding(),
                     bottom = paddingValues.calculateBottomPadding()
+
                 )
         ) {
             // Sección de casilleros reservados
