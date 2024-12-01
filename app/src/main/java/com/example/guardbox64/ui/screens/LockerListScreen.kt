@@ -1,5 +1,6 @@
 package com.example.guardbox64.ui.screens
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -33,6 +34,8 @@ import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.ArrowDropUp
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.Icon
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
@@ -56,14 +59,18 @@ fun LockerListScreen(
 
     val currentUser = FirebaseAuth.getInstance().currentUser
 
+    // Estado para controlar la expansión/collapse
+    val expandedReserved = remember { mutableStateOf(true) } // Siempre desplegado
+    val expandedShared = remember { mutableStateOf(true) } // Siempre desplegado
+    val expandedFree = remember { mutableStateOf(false) }
+    val expandedOccupied = remember { mutableStateOf(false) }
+
     Scaffold(
         topBar = {
-            // Barra superior con el título
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(Color(0xFFFD7E36))
-
                     .padding(8.dp)
             ) {
                 Icon(
@@ -75,7 +82,7 @@ fun LockerListScreen(
                 Text(
                     text = "GuardianBox",
                     style = MaterialTheme.typography.headlineMedium.copy(
-                        fontWeight = FontWeight.Bold, // Título en negrita
+                        fontWeight = FontWeight.Bold,
                         color = Color.Black,
                         fontSize = 24.sp,
                     ),
@@ -84,12 +91,11 @@ fun LockerListScreen(
             }
         },
         bottomBar = {
-            // Barra inferior con el nombre del usuario y el botón de cerrar sesión
             if (currentUser != null) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(Color(0xFFFEFEFE)) // Color de fondo gris claro para la barra inferior
+                        .background(Color(0xFFFEFEFE))
                         .padding(16.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
@@ -105,7 +111,6 @@ fun LockerListScreen(
                         style = MaterialTheme.typography.bodyLarge,
                         color = Color.Black
                     )
-                    // Aquí puedes poner un botón de cerrar sesión (aún no funcional)
                     Button(onClick = { /* Lógica de cerrar sesión */ }) {
                         Text(text = "Cerrar sesión")
                     }
@@ -113,33 +118,31 @@ fun LockerListScreen(
             }
         }
     ) { paddingValues ->
-        // Contenido principal de la pantalla
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .background(Color(0xFFFFA25D))
                 .padding(16.dp)
                 .padding(
-                    top = paddingValues.calculateTopPadding(), // Evitar que el contenido se solape con la barra superior
+                    top = paddingValues.calculateTopPadding(),
                     bottom = paddingValues.calculateBottomPadding()
                 )
         ) {
             // Sección de casilleros reservados
             if (reservedLockers.isNotEmpty()) {
-                Text(
-                    text = "Mis Casilleros",
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        color = Color.Black,
-                        fontWeight = FontWeight.Bold // Título en negrita
-                    )
-                )
-                LazyRow(
-                    contentPadding = PaddingValues(vertical = 8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ExpandableSection(
+                    sectionTitle = "Mis Casilleros",
+                    isExpanded = expandedReserved.value,
+                    onToggle = { expandedReserved.value = !expandedReserved.value }
                 ) {
-                    items(reservedLockers) { locker ->
-                        LockerItem(locker = locker, index = 0) {
-                            navController.navigate("locker_details/${locker.id}")
+                    LazyRow(
+                        contentPadding = PaddingValues(vertical = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(reservedLockers) { locker ->
+                            LockerItem(locker = locker, index = 0) {
+                                navController.navigate("locker_details/${locker.id}")
+                            }
                         }
                     }
                 }
@@ -147,22 +150,21 @@ fun LockerListScreen(
 
             // Sección de casilleros compartidos
             if (sharedLockers.isNotEmpty()) {
-                Text(
-                    text = "Casilleros Compatidos",
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        color = Color.Black,
-                        fontWeight = FontWeight.Bold // Título en negrita
-                    )
-                )
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(4), // 4 columnas
-                    contentPadding = PaddingValues(vertical = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ExpandableSection(
+                    sectionTitle = "Casilleros Compartidos",
+                    isExpanded = expandedShared.value,
+                    onToggle = { expandedShared.value = !expandedShared.value }
                 ) {
-                    itemsIndexed(freeLockers) { index, locker ->
-                        LockerItem(locker = locker, index = index) {
-                            navController.navigate("locker_details/${locker.id}")
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(4),
+                        contentPadding = PaddingValues(vertical = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        itemsIndexed(sharedLockers) { index, locker ->
+                            LockerItem(locker = locker, index = index) {
+                                navController.navigate("locker_details/${locker.id}")
+                            }
                         }
                     }
                 }
@@ -170,22 +172,21 @@ fun LockerListScreen(
 
             // Sección de casilleros libres
             if (freeLockers.isNotEmpty()) {
-                Text(
-                    text = "Casilleros Libres",
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        color = Color.Black,
-                        fontWeight = FontWeight.Bold // Título en negrita
-                    )
-                )
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(4), // 4 columnas
-                    contentPadding = PaddingValues(vertical = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ExpandableSection(
+                    sectionTitle = "Casilleros Libres",
+                    isExpanded = expandedFree.value,
+                    onToggle = { expandedFree.value = !expandedFree.value }
                 ) {
-                    itemsIndexed(freeLockers) { index, locker ->
-                        LockerItem(locker = locker, index = index) {
-                            navController.navigate("locker_details/${locker.id}")
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(4),
+                        contentPadding = PaddingValues(vertical = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        itemsIndexed(freeLockers) { index, locker ->
+                            LockerItem(locker = locker, index = index) {
+                                navController.navigate("locker_details/${locker.id}")
+                            }
                         }
                     }
                 }
@@ -193,22 +194,21 @@ fun LockerListScreen(
 
             // Sección de casilleros ocupados
             if (occupiedLockers.isNotEmpty()) {
-                Text(
-                    text = "Casilleros Ocupados",
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        color = Color.Black,
-                        fontWeight = FontWeight.Bold // Título en negrita
-                    )
-                )
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(4), // 4 columnas
-                    contentPadding = PaddingValues(vertical = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ExpandableSection(
+                    sectionTitle = "Casilleros Ocupados",
+                    isExpanded = expandedOccupied.value,
+                    onToggle = { expandedOccupied.value = !expandedOccupied.value }
                 ) {
-                    itemsIndexed(freeLockers) { index, locker ->
-                        LockerItem(locker = locker, index = index) {
-                            navController.navigate("locker_details/${locker.id}")
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(4),
+                        contentPadding = PaddingValues(vertical = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        itemsIndexed(occupiedLockers) { index, locker ->
+                            LockerItem(locker = locker, index = index) {
+                                navController.navigate("locker_details/${locker.id}")
+                            }
                         }
                     }
                 }
@@ -226,6 +226,42 @@ fun LockerListScreen(
         }
     }
 }
+
+@Composable
+fun ExpandableSection(
+    sectionTitle: String,
+    isExpanded: Boolean,
+    onToggle: () -> Unit,
+    content: @Composable () -> Unit
+) {
+    Column {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onToggle)
+                .padding(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = sectionTitle,
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Black
+                ),
+                modifier = Modifier.weight(1f)
+            )
+            Icon(
+                imageVector = if (isExpanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
+                contentDescription = "Expandir sección",
+                tint = Color.Black // Aquí defines el color del icono
+            )
+        }
+        AnimatedVisibility(visible = isExpanded) {
+            content()
+        }
+    }
+}
+
 
 @Composable
 fun LockerItem(locker: Locker, index: Int, onClick: () -> Unit) {
