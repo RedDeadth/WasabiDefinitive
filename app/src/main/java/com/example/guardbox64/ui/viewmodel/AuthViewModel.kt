@@ -27,13 +27,6 @@ class AuthViewModel : ViewModel() {
     private val _authState = MutableLiveData<FirebaseUser?>()
     val authState: LiveData<FirebaseUser?> = _authState
 
-    init {
-        // Observar el estado de autenticación de Firebase
-        auth.addAuthStateListener { firebaseAuth ->
-            _authState.value = firebaseAuth.currentUser
-        }
-    }
-
     fun register(
         email: String,
         password: String,
@@ -56,7 +49,6 @@ class AuthViewModel : ViewModel() {
             }
         }
     }
-
     fun login(
         email: String,
         password: String,
@@ -67,6 +59,7 @@ class AuthViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 auth.signInWithEmailAndPassword(email, password).await()
+                _authState.value = auth.currentUser
                 saveSession(auth.currentUser?.uid ?: "", context)
                 onSuccess()
             } catch (e: Exception) {
@@ -80,12 +73,10 @@ class AuthViewModel : ViewModel() {
             }
         }
     }
-
     fun loadSession(context: Context): String? {
         val sharedPref = context.getSharedPreferences("MyAppPrefs", Context.MODE_PRIVATE)
         return sharedPref.getString("user_id", null)
     }
-
     fun signInWithGoogle(idToken: String, context: Context, navController: NavController, onSuccess: () -> Unit, onFailure: (String) -> Unit) {
         val credential = GoogleAuthProvider.getCredential(idToken, null)
         viewModelScope.launch {
@@ -103,11 +94,11 @@ class AuthViewModel : ViewModel() {
         }
     }
 
-    private fun saveSession(userId: String, context: Context) {
-        val sharedPref = context.getSharedPreferences("MyAppPrefs", Context.MODE_PRIVATE)
-        with(sharedPref.edit()) {
-            putString("user_id", userId)
-            apply()
-        }
+}
+private fun saveSession(userId: String, context: Context) {
+    val sharedPref = context.getSharedPreferences("MyAppPrefs", Context.MODE_PRIVATE)
+    with(sharedPref.edit()) {
+        putString("user_id", userId)
+        apply()
     }
 }

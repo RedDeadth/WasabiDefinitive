@@ -166,7 +166,7 @@ fun LockerDetailsScreen(
                         .padding(24.dp) // Espaciado interno
                 ) {
                     Image(
-                        painter = painterResource(id = R.drawable.logo),
+                        painter = painterResource(id = R.drawable.locker),
                         contentDescription = "Imagen del Casillero",
                         modifier = Modifier
                             .size(200.dp) // Cambia el tamaño según lo que necesites

@@ -53,6 +53,7 @@ android {
 }
 
 dependencies {
+
     //FIREBASE
     implementation(platform("com.google.firebase:firebase-bom:32.7.3"))
     implementation("com.google.firebase:firebase-analytics")
@@ -86,13 +87,17 @@ dependencies {
     implementation(libs.firebase.crashlytics.buildtools)
     implementation(libs.androidx.runtime.livedata)
     implementation(libs.firebase.auth)
+
+    
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.ui.test.junit4)
+
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+
     implementation ("androidx.compose.ui:ui-text:1.5.0") // Dependencia para estilos de texto
     implementation ("androidx.compose.ui:ui:1.5.0") // Dependencia para estilos de texto
 
