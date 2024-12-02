@@ -105,6 +105,7 @@ import androidx.compose.ui.text.input.ImeAction
      // Recuperar la lista de usuarios permitidos cuando se carga la pantalla
      LaunchedEffect(lockerId) {
          lockerViewModel.observeSharedWithEmails(lockerId)
+         lockerViewModel.observeLockerOpenState(lockerId)
      }
 
      Box(
@@ -269,36 +270,23 @@ import androidx.compose.ui.text.input.ImeAction
 
                  // Lógica del switch del casillero
                  if (locker.occupied) {
-                     if (locker.userId == FirebaseAuth.getInstance().currentUser?.uid) {
-                         var isOpen by remember { mutableStateOf(lockerOpenState) }
+                     if (locker.userId == FirebaseAuth.getInstance().currentUser?.uid || locker.sharedWithEmails.contains(FirebaseAuth.getInstance().currentUser?.email)) {
+                         // Observar el estado de apertura
+                         val isOpen by lockerViewModel.lockerOpenState.observeAsState(false)
+
+                         // Lanzar efecto para comenzar a observar el estado del casillero
+                         LaunchedEffect(lockerId) {
+                             lockerViewModel.observeLockerOpenState(lockerId)
+                         }
 
                          // Switch para abrir/cerrar el casillero
                          Switch(
                              checked = isOpen,
                              onCheckedChange = { checked ->
-                                 isOpen = checked
                                  lockerViewModel.updateLockerOpenState(lockerId, checked)
                              }
                          )
-                         Text(
-                             text = if (isOpen) "Casillero Abierto" else "Casillero Cerrado",
-                             style = MaterialTheme.typography.bodyMedium.copy(
-                                 fontSize = 16.sp
-                             ),
-                             modifier = Modifier.padding(vertical = 8.dp) // Espaciado vertical
-                         )
 
-                     } else if (locker.sharedWithEmails.contains(FirebaseAuth.getInstance().currentUser?.email)) {
-                         var isOpen by remember { mutableStateOf(lockerOpenState) }
-
-                         // Switch para abrir/cerrar el casillero
-                         Switch(
-                             checked = isOpen,
-                             onCheckedChange = { checked ->
-                                 isOpen = checked
-                                 lockerViewModel.updateLockerOpenState(lockerId, checked)
-                             }
-                         )
                          Text(
                              text = if (isOpen) "Casillero Abierto" else "Casillero Cerrado",
                              style = MaterialTheme.typography.bodyMedium.copy(

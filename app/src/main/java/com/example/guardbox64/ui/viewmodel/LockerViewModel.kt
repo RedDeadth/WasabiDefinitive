@@ -263,12 +263,12 @@ class LockerViewModel : ViewModel() {
         })
     }
 
-    fun observeLockerOpenState(lockerId: String, onStateChanged: (Boolean) -> Unit) {
+    fun observeLockerOpenState(lockerId: String) {
         val lockerRef = database.child(lockerId).child("open")
         lockerRef.addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 val isOpen = snapshot.getValue(Boolean::class.java) ?: false
-                onStateChanged(isOpen)
+                _lockerOpenState.postValue(isOpen)
             }
 
             override fun onCancelled(error: DatabaseError) {
@@ -276,6 +276,7 @@ class LockerViewModel : ViewModel() {
             }
         })
     }
+
 
     fun observeSharedWithEmails(lockerId: String) {
         val sharedWithEmailsRef = database.child(lockerId).child("sharedWithEmails")
