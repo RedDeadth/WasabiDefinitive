@@ -15,9 +15,12 @@ import com.google.firebase.auth.FirebaseAuthWeakPasswordException
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import android.content.Context
+import android.content.Intent
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.navigation.NavController
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.common.api.ApiException
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
 
@@ -77,22 +80,46 @@ class AuthViewModel : ViewModel() {
         val sharedPref = context.getSharedPreferences("MyAppPrefs", Context.MODE_PRIVATE)
         return sharedPref.getString("user_id", null)
     }
-    fun signInWithGoogle(idToken: String, context: Context, navController: NavController, onSuccess: () -> Unit, onFailure: (String) -> Unit) {
+    private fun signInWithGoogle(
+        idToken: String,
+        context: Context,
+        onSuccess: () -> Unit,
+        onFailure: (String) -> Unit
+    ) {
         val credential = GoogleAuthProvider.getCredential(idToken, null)
         viewModelScope.launch {
             try {
                 auth.signInWithCredential(credential).await()
+                _authState.value = auth.currentUser
                 saveSession(auth.currentUser?.uid ?: "", context)
                 onSuccess()
-                navController.navigate("locker_list") {
-                    popUpTo("login") { inclusive = true }
-                }
             } catch (e: Exception) {
                 Log.e("AuthViewModel", "Error durante el inicio de sesión con Google", e)
                 onFailure("Error: ${e.message}")
             }
         }
     }
+    fun handleGoogleSignInResult(
+        data: Intent?,
+        context: Context,
+        onSuccess: () -> Unit,
+        onFailure: (String) -> Unit
+    ) {
+        val task = GoogleSignIn.getSignedInAccountFromIntent(data)
+        try {
+            val account = task.getResult(ApiException::class.java)
+            val idToken = account?.idToken
+            if (idToken != null) {
+                signInWithGoogle(idToken, context, onSuccess, onFailure)
+            } else {
+                onFailure("No se pudo obtener el token de Google")
+            }
+        } catch (e: ApiException) {
+            Log.e("AuthViewModel", "Google sign in failed", e)
+            onFailure("Error en el inicio de sesión de Google: ${e.message}")
+        }
+    }
+
 
 }
 private fun saveSession(userId: String, context: Context) {

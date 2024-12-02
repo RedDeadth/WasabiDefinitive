@@ -32,8 +32,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.filled.ArrowDropUp
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.ButtonDefaults
@@ -113,7 +111,7 @@ fun LockerListScreen(
                         color = Color.Black
                     )
                     Button(
-                        onClick = { /* Lógica de cerrar sesión */ },
+                        onClick = {},
                         colors = ButtonDefaults.buttonColors(containerColor = Color.Red) // Fondo rojo del botón
                     ) {
                         Text(text = "Cerrar sesión", color = Color.White) // Texto en blanco

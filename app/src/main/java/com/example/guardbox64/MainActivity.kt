@@ -60,7 +60,7 @@ class MainActivity : ComponentActivity() {
 
         // Aplicar el tema globalmente
         setContent {
-            AppTheme { // Envolver todo el contenido dentro del tema
+            AppTheme {
                 navController = rememberNavController() // Crear el controlador de navegación
                 NavGraph(navController = navController, startDestination = startDestination)
             }
@@ -94,26 +94,17 @@ class MainActivity : ComponentActivity() {
         super.onActivityResult(requestCode, resultCode, data)
 
         if (requestCode == RC_SIGN_IN) {
-            val task = GoogleSignIn.getSignedInAccountFromIntent(data)
-            try {
-                // El inicio de sesión fue exitoso, obtener el idToken
-                val account = task.getResult(ApiException::class.java)
-                val idToken = account?.idToken
-                if (idToken != null) {
-                    authViewModel.signInWithGoogle(idToken, this, navController, {
-                        // Autenticación exitosa, navega a la pantalla "locker_list"
-                        navController.navigate("locker_list") {
-                            popUpTo("login") { inclusive = true }
-                        }
-                    }, { errorMessage ->
-                        // Mostrar el error
-                        Toast.makeText(this, errorMessage, Toast.LENGTH_SHORT).show()
-                    })
+            authViewModel.handleGoogleSignInResult(
+                data,
+                this,
+                onSuccess = {
+                    // Navegación manejada por el observador de authState
+                    Toast.makeText(this, "Inicio de sesión exitoso", Toast.LENGTH_SHORT).show()
+                },
+                onFailure = { errorMessage ->
+                    Toast.makeText(this, errorMessage, Toast.LENGTH_SHORT).show()
                 }
-            } catch (e: ApiException) {
-                // El inicio de sesión falló
-                Log.e("MainActivity", "Google sign in failed", e)
-            }
+            )
         }
     }
 
