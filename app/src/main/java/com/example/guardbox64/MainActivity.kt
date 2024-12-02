@@ -98,8 +98,7 @@ class MainActivity : ComponentActivity() {
                 data,
                 this,
                 onSuccess = {
-                    // Navegación manejada por el observador de authState
-                    Toast.makeText(this, "Inicio de sesión exitoso", Toast.LENGTH_SHORT).show()
+
                 },
                 onFailure = { errorMessage ->
                     Toast.makeText(this, errorMessage, Toast.LENGTH_SHORT).show()

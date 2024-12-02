@@ -89,9 +89,9 @@ class AuthViewModel : ViewModel() {
         val credential = GoogleAuthProvider.getCredential(idToken, null)
         viewModelScope.launch {
             try {
-                auth.signInWithCredential(credential).await()
-                _authState.value = auth.currentUser
-                saveSession(auth.currentUser?.uid ?: "", context)
+                val result = auth.signInWithCredential(credential).await()
+                _authState.value = result.user
+                saveSession(result.user?.uid ?: "", context)
                 onSuccess()
             } catch (e: Exception) {
                 Log.e("AuthViewModel", "Error durante el inicio de sesión con Google", e)
