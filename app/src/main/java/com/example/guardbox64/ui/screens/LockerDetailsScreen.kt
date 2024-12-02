@@ -185,7 +185,7 @@ import androidx.compose.ui.text.input.ImeAction
                              .padding(start = 16.dp)
                      ) {
                          Text(
-                             text = "Código de Casillero: ${locker.id}",  // Mostrar el ID del casillero
+                             text = "ID: ${locker.id}",  // Mostrar el ID del casillero
                              style = MaterialTheme.typography.titleLarge.copy(
                                  fontWeight = FontWeight.Bold,
                                  fontSize = 24.sp,
