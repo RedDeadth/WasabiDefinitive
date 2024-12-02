@@ -220,7 +220,7 @@ import androidx.compose.ui.text.input.ImeAction
                  }
 
                  // Mostrar "Usuarios Permitidos" solo si hay usuarios permitidos
-                 if (sharedWithEmails.isNotEmpty()) {
+                 if (locker.userId == FirebaseAuth.getInstance().currentUser?.uid && sharedWithEmails.isNotEmpty()) {
                      Text(
                          text = "Usuarios Permitidos:",
                          style = MaterialTheme.typography.bodyLarge.copy(
