@@ -119,6 +119,23 @@ class AuthViewModel : ViewModel() {
             onFailure("Error en el inicio de sesión de Google: ${e.message}")
         }
     }
+    fun logout(context: Context) {
+        viewModelScope.launch {
+            try {
+                auth.signOut()
+                val sharedPref = context.getSharedPreferences("MyAppPrefs", Context.MODE_PRIVATE)
+                with(sharedPref.edit()) {
+                    remove("user_id")
+                    apply()
+                }
+                _authState.value = null // Actualiza el estado para reflejar que el usuario cerró sesión
+            } catch (e: Exception) {
+                Log.e("AuthViewModel", "Error durante el cierre de sesión", e)
+            }
+        }
+    }
+
+
 
 
 }

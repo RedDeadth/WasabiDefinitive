@@ -10,7 +10,7 @@ import com.example.guardbox64.ui.screens.ConfirmationScreen
 import com.example.guardbox64.ui.screens.LockerDetailsScreen
 import com.example.guardbox64.ui.screens.LockerListScreen
 import com.example.guardbox64.ui.screens.LoginScreen
-import com.example.guardbox64.ui.screens.PaymentScreen // Asegúrate de tener PaymentScreen importado
+import com.example.guardbox64.ui.screens.PaymentScreen
 import com.example.guardbox64.ui.viewmodel.LockerViewModel
 import com.example.guardbox64.ui.viewmodel.AuthViewModel
 
@@ -25,6 +25,7 @@ fun NavGraph(navController: NavHostController, startDestination: String) {
         composable("locker_list") {
             LockerListScreen(
                 lockerViewModel = lockerViewModel,
+                authViewModel = authViewModel,
                 navController = navController,
                 )
         }

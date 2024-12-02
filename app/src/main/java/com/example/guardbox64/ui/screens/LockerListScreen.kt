@@ -5,7 +5,8 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -36,17 +37,22 @@ import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
+import com.example.guardbox64.ui.viewmodel.AuthViewModel
 
 @Composable
 fun LockerListScreen(
     lockerViewModel: LockerViewModel,
+    authViewModel: AuthViewModel,
     navController: NavHostController,
 ) {
 
     val lockers by lockerViewModel.lockers.observeAsState(emptyList())
     val uniqueLockers = lockers.distinctBy { it.id }
+
+    val context = LocalContext.current
 
     val reservedLockers = uniqueLockers.filter { it.occupied && it.userId == FirebaseAuth.getInstance().currentUser?.uid }
     val freeLockers = uniqueLockers.filter { !it.occupied }
@@ -111,7 +117,12 @@ fun LockerListScreen(
                         color = Color.Black
                     )
                     Button(
-                        onClick = {},
+                        onClick = {
+                            authViewModel.logout(context)
+                            navController.navigate("login") {
+                                popUpTo("locker_list") { inclusive = true }
+                            }
+                        },
                         colors = ButtonDefaults.buttonColors(containerColor = Color.Red) // Fondo rojo del botón
                     ) {
                         Text(text = "Cerrar sesión", color = Color.White) // Texto en blanco
