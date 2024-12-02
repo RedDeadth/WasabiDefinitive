@@ -14,18 +14,15 @@ import com.example.guardbox64.MainActivity
 import com.example.guardbox64.ui.viewmodel.AuthViewModel
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
-import com.example.guardbox64.R  // Asegúrate de usar el paquete correcto de tu proyecto
+import com.example.guardbox64.R
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.ui.draw.clip
 
@@ -74,14 +71,12 @@ fun LoginScreen(navController: NavHostController, viewModel: AuthViewModel = vie
                 unfocusedIndicatorColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                 focusedLabelColor = MaterialTheme.colorScheme.primary,
                 unfocusedLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                // Eliminar textColor
+
             )
         )
 
 
         Spacer(modifier = Modifier.height(16.dp))
-
-// Campo de texto para la contraseña
         TextField(
             value = password,
             onValueChange = { password = it },
@@ -94,7 +89,7 @@ fun LoginScreen(navController: NavHostController, viewModel: AuthViewModel = vie
                 unfocusedIndicatorColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                 focusedLabelColor = MaterialTheme.colorScheme.primary,
                 unfocusedLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                // Eliminar textColor
+
             )
         )
 
