@@ -116,7 +116,12 @@ class AuthViewModel : ViewModel() {
             }
         } catch (e: ApiException) {
             Log.e("AuthViewModel", "Google sign in failed", e)
-            onFailure("Error en el inicio de sesión de Google: ${e.message}")
+            val errorMessage = if (e.statusCode == 10) {
+                "Error 10: Verifica que tu huella SHA-1 esté en Firebase y el google-services.json sea correcto."
+            } else {
+                "Error en el inicio de sesión de Google: ${e.message}"
+            }
+            onFailure(errorMessage)
         }
     }
     fun logout(context: Context) {

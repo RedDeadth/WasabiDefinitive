@@ -135,6 +135,15 @@ import androidx.compose.ui.text.input.ImeAction
                  )
              )
 
+            androidx.compose.material3.Surface(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(top = 16.dp),
+                shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
+                color = Color(0xFFFAFAFA),
+                shadowElevation = 8.dp
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
              if (isLoading) {
                  Text(
                      text = "Cargando...",
@@ -461,9 +470,11 @@ import androidx.compose.ui.text.input.ImeAction
                      }
                  }
              }
-         }
+                } // Cierra el Column del Surface
+            } // Cierra el Surface
+        }
 
-         // BottomBar con botón de finalizar reserva
+        // BottomBar con botón de finalizar reserva
          BottomAppBar(
              modifier = Modifier
                  .fillMaxWidth()
