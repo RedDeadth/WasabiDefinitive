@@ -13,35 +13,17 @@ Una aplicación nativa de Android moderna construida con **Kotlin**, **Jetpack C
 
 ## 📸 Demostración Visual de la Interfaz
 
-<div align="center">
+| 1. Autenticación (Login) | 2. Lista de Casilleros |
+| :---: | :---: |
+| <img src="docs/LOGIN.jpg" width="250" /> | <img src="docs/LIST.jpg" width="250" /><br><img src="docs/LIST_WITH_OWN.jpg" width="250" /> |
 
-### 1. Autenticación (Login)
-<img src="docs/LOGIN.jpg" width="250" />
+| 3. Detalle de Casillero | 4. Tarificación y Reserva |
+| :---: | :---: |
+| <img src="docs/DETAIL.jpg" width="250" /> | <img src="docs/TIME.jpg" width="250" /> |
 
-### 2. Panel Principal (Lista de Casilleros)
-Aquí el usuario visualiza todos los casilleros de la red con su estado codificado por color (Libres, Ocupados o Bloqueados).
-<p align="center">
-  <img src="docs/LIST.jpg" width="250" />
-  <img src="docs/LIST_WITH_OWN.jpg" width="250" />
-</p>
-
-### 3. Detalle de Casillero
-Permite revisar la ubicación, precio y disponibilidad antes de iniciar una orden.
-<img src="docs/DETAIL.jpg" width="250" />
-
-### 4. Tarificación y Reserva de Tiempos
-Calculo automático de tarifas (pricing) según las horas predeterminadas o configuración de horas personalizadas.
-<img src="docs/TIME.jpg" width="250" />
-
-### 5. Propiedad y Modos Extendidos
-Una vez asignado un casillero, el usuario adquiere privilegios extendidos como Abrir/Cerrar a distancia o Agregar a más personas.
-<img src="docs/OWN.jpg" width="250" />
-
-### 6. Sistema de Seguridad al Finalizar
-Temporizador de cuenta regresiva de 5 segundos para advertir el cierre lógico general, permitiendo cancelaciones de último milisegundo.
-<img src="docs/TIMEREND.jpg" width="250" />
-
-</div>
+| 5. Modos Extendidos | 6. Finalización Segura |
+| :---: | :---: |
+| <img src="docs/OWN.jpg" width="250" /> | <img src="docs/TIMEREND.jpg" width="250" /> |
 
 ---
 
